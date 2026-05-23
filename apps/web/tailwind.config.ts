@@ -5,21 +5,30 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}', '../../packages/ui/src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Every token reads a CSS custom property defined in packages/ui/src/styles.css,
+      // so styles.css stays the single source of truth (and survives a future dark mode).
       colors: {
-        emerald: { DEFAULT: '#0E5C3A', hover: '#0A4A2E' },
-        paper: '#F2EDE2',
-        sheet: '#FBF7EC',
-        recessed: '#ECE5D4',
-        ink: { DEFAULT: '#1A1714', secondary: '#3D3833', tertiary: '#6E665B' },
-        hairline: '#D6CDB8',
-        oxblood: '#9A1F18',
-        amber: { DEFAULT: '#8E5A0E' },
-        infoblue: '#1F4D7A',
+        emerald: { DEFAULT: 'var(--emerald)', hover: 'var(--emerald-hover)' },
+        paper: 'var(--paper)',
+        sheet: { DEFAULT: 'var(--sheet)', edge: 'var(--sheet-edge)' },
+        recessed: 'var(--recessed)',
+        ink: { DEFAULT: 'var(--ink)', secondary: 'var(--ink-2)', tertiary: 'var(--ink-3)' },
+        hair: { DEFAULT: 'var(--hair)', soft: 'var(--hair-soft)' },
+        oxblood: { DEFAULT: 'var(--oxblood)', bg: 'var(--oxblood-bg)' },
+        amber: { DEFAULT: 'var(--amber)', bg: 'var(--amber-bg)' },
+        infoblue: { DEFAULT: 'var(--info)', bg: 'var(--info-bg)' },
+        // Product marks — tiny inline marks only, never fills.
+        pms: 'var(--pms)',
+        ago: 'var(--ago)',
+        dpk: 'var(--dpk)',
       },
       fontFamily: {
         serif: ['"Source Serif 4"', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+      },
+      borderRadius: {
+        card: 'var(--r-card)',
       },
     },
   },
