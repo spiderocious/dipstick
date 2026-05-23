@@ -1,0 +1,11 @@
+[build]
+  base = "apps/web"
+  command = "pnpm install --filter @dipstick/web... && pnpm --filter @dipstick/web build"
+  publish = "dist"
+
+# Vite SPA — every path falls back to index.html so client-side routing
+# (e.g. /preview, /dashboard) resolves on a hard refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

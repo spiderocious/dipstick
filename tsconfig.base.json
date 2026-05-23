@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@dipstick/ui": ["./packages/ui/src/index.ts"],
+      "@dipstick/ui/*": ["./packages/ui/src/*"],
+      "@dipstick/core": ["./packages/core/src/index.ts"],
+      "@dipstick/core/*": ["./packages/core/src/*"],
+      "@dipstick/api": ["./packages/api/src/index.ts"],
+      "@dipstick/api/*": ["./packages/api/src/*"],
+      "@icons": ["./packages/ui/src/icons/index.ts"]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+[build]
+  base = "apps/website"
+  command = "pnpm install --filter @dipstick/website... && pnpm --filter @dipstick/website build"
+  publish = ".next"
+
+# Native Next.js support on Netlify. The plugin handles middleware,
+# image optimization, and route hashing automatically.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"

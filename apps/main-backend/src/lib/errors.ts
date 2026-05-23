@@ -1,0 +1,54 @@
+import type { ErrorCode } from '@shared/constants/error-codes.js';
+import { HTTP_STATUS } from '@shared/constants/http-status.js';
+
+export class AppError extends Error {
+  public readonly retryAfter?: number;
+
+  constructor(
+    public readonly code: ErrorCode,
+    message: string,
+    public readonly status = 400,
+    public readonly fieldErrors?: Record<string, string[]>,
+    retryAfter?: number,
+  ) {
+    super(message);
+    this.name = 'AppError';
+    if (retryAfter !== undefined) this.retryAfter = retryAfter;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class ValidationError extends AppError {
+  constructor(message: string, fieldErrors: Record<string, string[]>) {
+    super('validation_error', message, HTTP_STATUS.BAD_REQUEST, fieldErrors);
+    this.name = 'ValidationError';
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Unauthorized') {
+    super('unauthorized', message, HTTP_STATUS.UNAUTHORIZED);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Forbidden') {
+    super('forbidden', message, HTTP_STATUS.FORBIDDEN);
+    this.name = 'ForbiddenError';
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(resource = 'Resource') {
+    super('not_found', `${resource} not found`, HTTP_STATUS.NOT_FOUND);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message: string) {
+    super('conflict', message, HTTP_STATUS.CONFLICT);
+    this.name = 'ConflictError';
+  }
+}

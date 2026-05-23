@@ -1,0 +1,56 @@
+/* Shared base styles + design tokens for Dipstick. Apps import this from
+   `@dipstick/ui/styles.css` on top of their own Tailwind layer. See mvp.md.
+   Warm cream + warm ink, single deep-emerald accent. Never pure white/black. */
+
+:root {
+  /* Brand — the single accent */
+  --emerald: #0e5c3a;
+  --emerald-hover: #0a4a2e;
+
+  /* Paper & surfaces */
+  --paper: #f2ede2; /* the canvas */
+  --sheet: #fbf7ec; /* a card on the canvas */
+  --sheet-edge: #e3dcc9;
+  --recessed: #ece5d4; /* behind a card */
+
+  /* Ink */
+  --ink: #1a1714;
+  --ink-2: #3d3833;
+  --ink-3: #6e665b; /* labels */
+  --hair: #d6cdb8; /* hairline border */
+  --hair-soft: #e3dcc9;
+
+  /* State — used sparingly, never decoration */
+  --oxblood: #9a1f18; /* shortage / void (reserved) */
+  --oxblood-bg: #f7e9e7;
+  --amber: #8e5a0e; /* watch / over / out-of-spec */
+  --amber-bg: #f6eddc;
+  --info: #1f4d7a; /* system / info note */
+  --info-bg: #e6eef5;
+
+  /* Product marks */
+  --pms: #0e5c3a;
+  --ago: #8e5a0e;
+  --dpk: #6b4e8e;
+
+  /* Geometry */
+  --r-card: 16px;
+
+  /* Type families */
+  --font-display: 'Source Serif 4', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+html,
+body {
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Every figure reads as a ledger column. */
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

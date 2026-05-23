@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: theme('colors.paper');
+  color: theme('colors.ink.DEFAULT');
+  font-family: theme('fontFamily.sans');
+}
