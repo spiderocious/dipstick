@@ -4,9 +4,9 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Solon — Political intelligence for Nigeria',
+  title: 'Dipstick — The station logbook for Nigerian filling stations',
   description:
-    'Pre-campaign simulation, voter data, agent coordination, finance compliance and an election-day war room.',
+    'Opening dip, pump readings, deliveries, expenses and closing dip — recorded once, signed, and rolled up across every branch.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>

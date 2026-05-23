@@ -1,55 +1,61 @@
 import Link from 'next/link';
 
-import { AppText } from '@solon/ui';
+import { AppText } from '@dipstick/ui';
 
 export default function HomePage() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:5173';
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-20">
-      <AppText variant="caption">solon</AppText>
-      <AppText variant="display-1" className="mt-2 text-forest-900">
-        Wisdom, reform, neutrality — at the speed of a campaign.
+      <AppText variant="caption">dipstick</AppText>
+      <AppText variant="display-1" className="mt-2 text-emerald">
+        The cashier&apos;s book, made shared, signed and tamper-proof.
       </AppText>
-      <AppText variant="body" className="mt-6 max-w-2xl text-charcoal-700">
-        Named after Solon of Athens, who laid the groundwork for democracy and refused to make himself
-        king when given the chance. We build the campaign stack that respects that lineage —
-        probabilistic, transparent, and resistant to manipulation.
+      <AppText variant="body" className="mt-6 max-w-2xl text-ink-secondary">
+        Dipstick is a digital station logbook for Nigerian filling-station owners with one to ten branches.
+        The manager records the day; the owner sees the roll-up across every branch from one screen, every
+        morning. No hardware, no POS — a trusted manual logbook by design.
       </AppText>
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           href={appUrl}
-          className="inline-flex items-center justify-center rounded-md bg-forest-900 px-5 py-2.5 text-sm font-medium text-cream-50 hover:bg-forest-700"
+          className="inline-flex items-center justify-center rounded-md bg-emerald px-5 py-2.5 text-sm font-medium text-sheet hover:bg-emerald-hover"
         >
           Open the app
         </Link>
         <Link
           href="/pricing"
-          className="inline-flex items-center justify-center rounded-md border border-forest-900/20 px-5 py-2.5 text-sm font-medium text-forest-900 hover:bg-forest-900/5"
+          className="inline-flex items-center justify-center rounded-md border border-hairline px-5 py-2.5 text-sm font-medium text-emerald hover:bg-emerald/5"
         >
           Pricing
         </Link>
       </div>
 
       <section className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <Card title="Module 0 — Simulator" body="Race-level scenario modelling for aspirants and strategists." />
-        <Card title="Module 1 — Voter Data" body="Polling-unit-level segmentation and message generation." />
-        <Card title="Module 2 — Agents" body="Recruit, train, dispatch and verify field agents on election day." />
-        <Card title="Module 3 — Finance" body="INEC-compliant expense tracking with anomaly detection." />
-        <Card title="Module 4 — War Room" body="Live results, incidents and reconciliation with citizen reports." />
+        <Card title="The day-book" body="Opening dip, shifts, deliveries, expenses, closing dip — in the order they happened." />
+        <Card title="Reconciliation" body="Litres dispensed vs cash declared, flagged balanced, short or over per pump per shift." />
+        <Card title="Deliveries" body="A guided four-stage tanker offload: arrive, dip-before, offload, dip-after & sign." />
+        <Card title="Pricing" body="Price changes pinned to the effective shift, with a full per-product history." />
+        <Card title="Owner roll-up" body="Yesterday's totals across every branch, with the shortages to review this morning." />
+        <Card title="Audit & voids" body="Posted entries are final. Reversal is the void idiom — visible, signed, permanent." />
       </section>
     </main>
   );
 }
 
-function Card({ title, body }: { title: string; body: string }) {
+interface CardProps {
+  readonly title: string;
+  readonly body: string;
+}
+
+function Card({ title, body }: CardProps) {
   return (
-    <div className="rounded-lg border border-forest-900/10 bg-white p-5 shadow-sm">
-      <AppText variant="heading-3" className="text-forest-900">
+    <div className="rounded-lg border border-hairline bg-sheet p-5 shadow-sm">
+      <AppText variant="heading-3" className="text-emerald">
         {title}
       </AppText>
-      <AppText variant="body-sm" className="mt-2 text-charcoal-700">
+      <AppText variant="body-sm" className="mt-2 text-ink-secondary">
         {body}
       </AppText>
     </div>

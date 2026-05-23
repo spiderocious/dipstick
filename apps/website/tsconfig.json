@@ -16,10 +16,10 @@
     "paths": {
       "@app/*": ["./src/app/*"],
       "@components/*": ["./src/components/*"],
-      "@solon/ui": ["../../packages/ui/src/index.ts"],
-      "@solon/ui/*": ["../../packages/ui/src/*"],
-      "@solon/core": ["../../packages/core/src/index.ts"],
-      "@solon/core/*": ["../../packages/core/src/*"],
+      "@dipstick/ui": ["../../packages/ui/src/index.ts"],
+      "@dipstick/ui/*": ["../../packages/ui/src/*"],
+      "@dipstick/core": ["../../packages/core/src/index.ts"],
+      "@dipstick/core/*": ["../../packages/core/src/*"],
       "@icons": ["../../packages/ui/src/icons/index.ts"]
     }
   },

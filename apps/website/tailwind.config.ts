@@ -1,17 +1,25 @@
 import type { Config } from 'tailwindcss';
 
+// Dipstick palette — warm cream + warm ink, single deep-emerald accent. See mvp.md.
 export default {
   content: ['./src/**/*.{ts,tsx}', '../../packages/ui/src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        forest: { 700: '#2D5A3D', 900: '#1B4332' },
-        cream: { 50: '#F5EFE0' },
-        orange: { 600: '#C7522A' },
+        emerald: { DEFAULT: '#0E5C3A', hover: '#0A4A2E' },
+        paper: '#F2EDE2',
+        sheet: '#FBF7EC',
+        recessed: '#ECE5D4',
+        ink: { DEFAULT: '#1A1714', secondary: '#3D3833', tertiary: '#6E665B' },
+        hairline: '#D6CDB8',
+        oxblood: '#9A1F18',
+        amber: { DEFAULT: '#8E5A0E' },
+        infoblue: '#1F4D7A',
       },
       fontFamily: {
-        serif: ['Fraunces', 'Georgia', 'serif'],
+        serif: ['"Source Serif 4"', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
     },
   },

@@ -4,7 +4,7 @@
 
 html,
 body {
-  background: #f5efe0;
-  color: #1f2024;
+  background: theme('colors.paper');
+  color: theme('colors.ink.DEFAULT');
   font-family: theme('fontFamily.sans');
 }

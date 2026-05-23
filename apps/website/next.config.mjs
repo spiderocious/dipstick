@@ -8,12 +8,12 @@ const nextConfig = {
   reactStrictMode: true,
   // Transpile workspace packages — Next 15 transpiles ESM by default, but our
   // tsconfig path aliases point at TS source so we tell Next to compile them.
-  transpilePackages: ['@solon/ui', '@solon/core'],
+  transpilePackages: ['@dipstick/ui', '@dipstick/core'],
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias ?? {}),
-      '@solon/ui': path.resolve(__dirname, '../../packages/ui/src/index.ts'),
-      '@solon/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
+      '@dipstick/ui': path.resolve(__dirname, '../../packages/ui/src/index.ts'),
+      '@dipstick/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
       '@icons': path.resolve(__dirname, '../../packages/ui/src/icons/index.ts'),
     };
     // NodeNext/ESM convention across the workspace: source code spells out
