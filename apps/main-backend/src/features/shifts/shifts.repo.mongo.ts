@@ -1,6 +1,5 @@
 import type { Collection } from 'mongodb';
 
-import type { Product } from '@dipstick/core';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';

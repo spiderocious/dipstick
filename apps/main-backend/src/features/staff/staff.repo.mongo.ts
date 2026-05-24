@@ -2,7 +2,6 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
-import type { Tx } from '@db/transaction.js';
 import type { RosterDoc } from '@shared/types/documents.js';
 
 import type { RosterRepo } from './staff.repo.js';

@@ -177,7 +177,7 @@ export type NoteEntityType = 'shift' | 'expense' | 'delivery';
 
 export interface NoteDoc extends BaseDoc {
   orgId: string;
-  branchId: string;
+  branchId: string | null;
   entityType: NoteEntityType;
   entityId: string;
   authorId: string;

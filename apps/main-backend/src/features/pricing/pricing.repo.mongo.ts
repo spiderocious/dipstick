@@ -4,7 +4,6 @@ import type { Product } from '@dipstick/core';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
-import type { Tx } from '@db/transaction.js';
 import type { PriceDoc } from '@shared/types/documents.js';
 
 import type { PriceRepo } from './pricing.repo.js';
