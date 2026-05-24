@@ -6,7 +6,9 @@ import helmet from 'helmet';
 import { register as registerAuth } from '@features/auth/index.js';
 import { register as registerBranches } from '@features/branches/index.js';
 import { register as registerHealth } from '@features/health/index.js';
+import { register as registerPricing } from '@features/pricing/index.js';
 import { register as registerRoles } from '@features/roles/index.js';
+import { register as registerShifts } from '@features/shifts/index.js';
 import { register as registerStaff } from '@features/staff/index.js';
 import { errorHandler } from '@middlewares/errorHandler.middleware.js';
 import { requestIdMiddleware } from '@middlewares/requestId.middleware.js';
@@ -19,6 +21,8 @@ const features = [
   registerAuth,
   registerRoles,
   registerStaff,
+  registerPricing,
+  registerShifts,
   registerBranches,
 ];
 
