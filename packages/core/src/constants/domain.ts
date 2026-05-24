@@ -2,14 +2,7 @@
 // enum value. Logic must never inline these; reference the POJO. (Human-readable copy is a
 // separate concern and may be literal in components — see each feature's *.copy.ts.)
 
-import type {
-  DeliveryStage,
-  Product,
-  PumpState,
-  ShiftStatus,
-  ShiftWindow,
-  VarianceStatus,
-} from '../types/index.js';
+import type { DeliveryStage, Product, ShiftWindow } from '../types/index.js';
 
 // The three Nigerian forecourt products.
 export const PRODUCT = {

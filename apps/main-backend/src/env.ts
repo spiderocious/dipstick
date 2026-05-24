@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().default(8081),
+  PORT: z.coerce.number().default(8091),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
 
   APP_BASE_URL: z.string().url(),
@@ -17,9 +17,15 @@ const EnvSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
-  // OTP lifecycle (phone verification, Module 1).
+  // OTP lifecycle (Module 1).
   OTP_TTL_SECONDS: z.coerce.number().default(600),
   OTP_MAX_ATTEMPTS: z.coerce.number().default(5),
+
+  // Verification policy: which channel(s) a new owner must verify before the workspace
+  // unlocks (tokens issued). `none` auto-verifies at sign-up (no OTP); `both` requires email
+  // AND phone. Default `phone` preserves the historical behaviour. A required channel whose
+  // value is absent at sign-up is treated as already satisfied (can't verify what isn't given).
+  AUTH_VERIFICATION: z.enum(['none', 'email', 'phone', 'both']).default('phone'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

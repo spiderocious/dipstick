@@ -3,7 +3,7 @@
 **Date:** 2026-05-24
 **Branch:** main
 **Build:** Typecheck ✅ · Lint ✅ · Build ✅ (`pnpm nx run-many -t typecheck lint build -p main-backend core api`)
-**Base URL:** `http://localhost:8081/api/v1`
+**Base URL:** `http://localhost:8091/api/v1`
 **Auth header:** `Authorization: Bearer <access_token>`
 **Full endpoint reference:** `docs/api-docs.md` · **Architecture/decisions:** `docs/backend-plan.md`
 
@@ -18,7 +18,7 @@ This document is the test surface. A QA engineer should be able to exercise the 
 # Multi-document transactions need a replica set; on a standalone Mongo the backend
 # degrades to non-transactional writes (fine for QA, logged as a warning).
 pnpm install
-pnpm nx serve main-backend     # http://localhost:8081
+pnpm nx serve main-backend     # http://localhost:8091
 ```
 
 There is **no seed script**. Bootstrap data through the API: register an owner → verify OTP →

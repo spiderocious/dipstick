@@ -1,6 +1,7 @@
 import type {
   MembershipDoc,
   OrgDoc,
+  OtpChannel,
   OtpDoc,
   RoleDoc,
   SessionDoc,
@@ -17,6 +18,7 @@ export interface UserRepo {
   findByEmail(email: string): Promise<UserDoc | null>;
   findByPhone(phone: string): Promise<UserDoc | null>;
   insert(doc: UserDoc, tx?: Tx): Promise<void>;
+  setEmailVerified(id: string, at: string): Promise<void>;
   setPhoneVerified(id: string, at: string): Promise<void>;
 }
 
@@ -59,9 +61,9 @@ export interface MembershipRepo {
 
 export interface OtpRepo {
   insert(doc: OtpDoc): Promise<void>;
-  findLatestByPhone(phone: string): Promise<OtpDoc | null>;
+  findLatestByTarget(channel: OtpChannel, target: string): Promise<OtpDoc | null>;
   incrementAttempts(id: string): Promise<void>;
-  deleteByPhone(phone: string): Promise<void>;
+  deleteByTarget(channel: OtpChannel, target: string): Promise<void>;
 }
 
 export interface SessionRepo {

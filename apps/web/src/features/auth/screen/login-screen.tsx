@@ -28,7 +28,7 @@ export function LoginScreen() {
       {
         onSuccess: () => {
           DrawerService.toast(LOGIN_COPY.title, { mark: AUTH_TOAST.signedInMark });
-          navigate(ROUTES.DASHBOARD, { replace: true });
+          navigate(ROUTES.BRANCHES, { replace: true });
         },
         onError: handleError,
       },

@@ -41,7 +41,7 @@ docs/               Markdown only — conventions and QA handoffs.
 pnpm install
 
 # Run a single project
-pnpm nx serve main-backend     # API on http://localhost:8081
+pnpm nx serve main-backend     # API on http://localhost:8091
 pnpm nx serve web              # operator app on http://localhost:5173
 pnpm nx serve website          # marketing site on http://localhost:3000
 

@@ -9,7 +9,15 @@ export const ensureIndexes = async (): Promise<void> => {
   const db = getDb();
 
   await db.collection(COLLECTION.users).createIndex({ email: 1 }, { unique: true });
-  await db.collection(COLLECTION.users).createIndex({ phone: 1 }, { unique: true });
+  // Phone is optional. A plain unique index would treat every phone-less user as a duplicate
+  // null; a PARTIAL unique index enforces uniqueness only over documents that actually have a
+  // string phone, so many users can have no phone.
+  await db
+    .collection(COLLECTION.users)
+    .createIndex(
+      { phone: 1 },
+      { unique: true, partialFilterExpression: { phone: { $type: 'string' } } },
+    );
 
   await db.collection(COLLECTION.orgs).createIndex({ ownerId: 1 });
 
@@ -46,7 +54,7 @@ export const ensureIndexes = async (): Promise<void> => {
   await db.collection(COLLECTION.audit).createIndex({ entityType: 1, entityId: 1, at: -1 });
 
   // OTP + refresh tokens expire via TTL.
-  await db.collection(COLLECTION.otps).createIndex({ phone: 1 });
+  await db.collection(COLLECTION.otps).createIndex({ channel: 1, target: 1 });
   await db.collection(COLLECTION.otps).createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   await db.collection(COLLECTION.sessions).createIndex({ userId: 1 });
   await db

@@ -17,7 +17,7 @@ deviations need a comment explaining why. When in doubt, read the source — doc
 
 ```
 apps/
-  main-backend/     Express, public HTTP API (port 8081)
+  main-backend/     Express, public HTTP API (port 8091)
   web/              Vite/React operator app (port 5173)
   website/          Next.js marketing site (port 3000)
 packages/

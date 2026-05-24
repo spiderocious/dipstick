@@ -24,6 +24,7 @@ export const serializeUser = (u: UserDoc) => ({
   name: u.name,
   email: u.email,
   phone: u.phone,
+  email_verified: u.emailVerifiedAt !== null,
   phone_verified: u.phoneVerifiedAt !== null,
   is_active: u.isActive,
   created_at: u.createdAt,

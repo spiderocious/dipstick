@@ -43,7 +43,7 @@ export function VerifyScreen() {
         onSuccess: () => {
           clearPendingVerification();
           DrawerService.toast(VERIFY_COPY.title, { mark: AUTH_TOAST.verifiedMark });
-          navigate(ROUTES.DASHBOARD, { replace: true });
+          navigate(ROUTES.BRANCHES, { replace: true });
         },
         onError: handleError,
       },

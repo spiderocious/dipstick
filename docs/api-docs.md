@@ -1,6 +1,6 @@
 # Dipstick API — Reference
 
-`main-backend` HTTP API. Base URL: `http://localhost:8081`. All paths below are under
+`main-backend` HTTP API. Base URL: `http://localhost:8091`. All paths below are under
 `/api/v1`. Source of truth is the code (`apps/main-backend/src/features/*`); this doc tracks it.
 
 - **Content type:** `application/json` for every request with a body.

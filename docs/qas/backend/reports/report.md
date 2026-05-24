@@ -3,7 +3,7 @@
 > **QA:** Claude
 > **Date:** 2026-05-24
 > **Build:** `apps/main-backend` @ main · typecheck/lint/build green · includes the BUG-01 fix (`db/transaction.ts` + `db/client.ts`)
-> **Environment:** server `localhost:8081` (`pnpm nx serve main-backend`, `NODE_ENV=development`) · MongoDB **standalone** `mongodb://127.0.0.1:27017`, db `dipstick`
+> **Environment:** server `localhost:8091` (`pnpm nx serve main-backend`, `NODE_ENV=development`) · MongoDB **standalone** `mongodb://127.0.0.1:27017`, db `dipstick`
 > **Plan:** `docs/qas/backend/plans/test-plan.md` · **Scripts:** `docs/qas/backend/scripts/` · **Bugs:** `docs/qas/backend/reports/bugs.md`
 > **Run status:** ✅ Full suite executed end-to-end.
 
@@ -52,7 +52,7 @@ The 3 failures are **all confirmed product bugs** (BUG-02/03/04), each reproduce
 |----|--------|-------|
 | PF-01 | **PASS** | `GET /health` → 200 `{data:{status:"ok",env:"development"}}` |
 | PF-02 | **PASS** | MongoDB reachable, standalone topology |
-| PF-03 | **PASS** | Clean boot: `mongo connected`, `indexes ensured`, `listening :8081`; the BUG-01 degrade logged **once** as designed |
+| PF-03 | **PASS** | Clean boot: `mongo connected`, `indexes ensured`, `listening :8091`; the BUG-01 degrade logged **once** as designed |
 
 **BUG-01 (P0) re-verification:** the prior run was fully blocked because `POST /auth/register` 500'd on standalone Mongo. After the engineer's fix, bootstrap BS-01–BS-15 are green, including three multi-document `withTransaction` writes (register, branch-create+audit, shift-post+audit) and delivery-sign+tank-balance. The blocker is cleared.
 

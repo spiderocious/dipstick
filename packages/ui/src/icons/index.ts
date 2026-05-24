@@ -30,6 +30,7 @@ export {
   Pencil as IconEdit, // edit a row
   ShieldCheck as IconRole, // roles & permissions
   ChevronUp as IconChevronUp,
+  Menu as IconMenu, // mobile nav hamburger
 } from 'lucide-react';
 
 // The shared icon type, so feature code can type an icon prop without importing lucide-react.

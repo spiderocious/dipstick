@@ -1,5 +1,5 @@
 // Shared HTTP wrapper for the Dipstick backend QA suite. Plain Node fetch (Node 18+).
-export const BASE = process.env.QA_BASE ?? 'http://localhost:8081/api/v1';
+export const BASE = process.env.QA_BASE ?? 'http://localhost:8091/api/v1';
 
 export async function request(path, { method = 'GET', body, token, headers = {} } = {}) {
   const h = { ...headers };

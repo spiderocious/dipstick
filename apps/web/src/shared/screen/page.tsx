@@ -15,29 +15,46 @@ interface PageHeadProps {
 
 export function PageHead({ overline, title, meta, actions }: PageHeadProps) {
   return (
-    <div className="mb-8 flex items-end gap-4 border-b border-ink pb-4">
+    <div className="mb-6 flex flex-col gap-3 border-b border-ink pb-4 sm:mb-8 sm:flex-row sm:items-end sm:gap-4">
       <div className="min-w-0">
         {overline !== undefined && (
-          <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-tertiary">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-tertiary sm:text-[11px]">
             {overline}
           </div>
         )}
-        <h1 className="m-0 font-serif text-[28px] font-semibold leading-[1.05] tracking-[-0.02em] text-ink">
+        <h1 className="m-0 font-serif text-[22px] font-semibold leading-[1.05] tracking-[-0.02em] text-ink sm:text-[28px]">
           {title}
         </h1>
       </div>
       {meta !== undefined && (
-        <div className="ml-auto font-mono text-[11px] text-ink-tertiary">{meta}</div>
+        <div className="font-mono text-[11px] text-ink-tertiary sm:ml-auto">{meta}</div>
       )}
       {actions !== undefined && (
-        <div className={cn('flex items-center gap-2', meta === undefined && 'ml-auto')}>{actions}</div>
+        <div
+          className={cn(
+            'flex flex-wrap items-center gap-2',
+            meta === undefined && 'sm:ml-auto',
+          )}
+        >
+          {actions}
+        </div>
       )}
     </div>
   );
 }
 
 export function PageBody({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('mx-auto max-w-[1100px] px-10 py-10', className)}>{children}</div>;
+  return (
+    <div className={cn('mx-auto max-w-[1100px] px-4 py-6 sm:px-8 sm:py-10 lg:px-10', className)}>
+      {children}
+    </div>
+  );
+}
+
+// ScrollX — wrap a wide block (a ledger table, a roster grid) so it scrolls horizontally on a
+// phone instead of overflowing the viewport. The inner content keeps its natural min width.
+export function ScrollX({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn('-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0', className)}>{children}</div>;
 }
 
 // QueryState — the loading / error / empty / loaded gate every data screen uses.

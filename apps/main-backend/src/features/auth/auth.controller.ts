@@ -18,6 +18,16 @@ import {
   VerifyOtpBody,
 } from './auth.schema.js';
 
+// Map the service's pending-channel list to the wire shape (dev_otp only in non-prod).
+const serializePending = (
+  pending: ReadonlyArray<{ channel: string; target: string; devOtp: string | null }>,
+) =>
+  pending.map((p) => ({
+    channel: p.channel,
+    target: p.target,
+    ...(p.devOtp ? { dev_otp: p.devOtp } : {}),
+  }));
+
 export const authController = {
   register: async (req: Request, res: Response): Promise<Response> => {
     const body = validate(RegisterBody, req.body);
@@ -25,30 +35,38 @@ export const authController = {
       name: body.name,
       businessName: body.business_name,
       email: body.email,
-      phone: body.phone,
+      ...(body.phone !== undefined ? { phone: body.phone } : {}),
       password: body.password,
     });
     return sendResult(res, result, (r, data) =>
       ResponseUtil.created(r, {
         user: serializeUser(data.user),
         org: serializeOrg(data.org),
-        phone_verification_required: true,
-        ...(data.devOtp ? { dev_otp: data.devOtp } : {}),
+        // Empty pending + tokens → policy `none` (auto-verified, signed in immediately).
+        verification_required: data.pending.length > 0,
+        pending: serializePending(data.pending),
+        tokens: data.tokens,
       }),
     );
   },
 
   verifyOtp: async (req: Request, res: Response): Promise<Response> => {
     const body = validate(VerifyOtpBody, req.body);
-    const result = await authService.verifyOtp(body.phone, body.code);
+    const result = await authService.verifyOtp(body.channel, body.target, body.code);
     return sendResult(res, result, (r, data) =>
-      ResponseUtil.ok(r, { user: serializeUser(data.user), tokens: data.tokens }),
+      ResponseUtil.ok(r, {
+        user: serializeUser(data.user),
+        tokens: data.tokens,
+        // Non-empty → policy `both` and another channel still needs verifying.
+        verification_required: data.pending.length > 0,
+        pending: serializePending(data.pending),
+      }),
     );
   },
 
   resendOtp: async (req: Request, res: Response): Promise<Response> => {
     const body = validate(ResendOtpBody, req.body);
-    const result = await authService.resendOtp(body.phone);
+    const result = await authService.resendOtp(body.channel, body.target);
     return sendResult(res, result, (r, data) =>
       ResponseUtil.ok(r, { sent: true, ...(data.devOtp ? { dev_otp: data.devOtp } : {}) }),
     );
@@ -58,7 +76,13 @@ export const authController = {
     const body = validate(LoginBody, req.body);
     const result = await authService.login(body.email, body.password);
     return sendResult(res, result, (r, data) =>
-      ResponseUtil.ok(r, { user: serializeUser(data.user), tokens: data.tokens }),
+      ResponseUtil.ok(r, {
+        user: serializeUser(data.user),
+        tokens: data.tokens,
+        // tokens null + pending → account not yet verified; FE routes to OTP.
+        verification_required: data.pending.length > 0,
+        pending: serializePending(data.pending),
+      }),
     );
   },
 

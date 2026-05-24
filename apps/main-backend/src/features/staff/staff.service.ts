@@ -112,6 +112,7 @@ export class StaffService {
           phone: input.phone,
           passwordHash: await hashPassword(input.password ?? `temp-${newId('otp')}`),
           // Staff added by a manager are pre-verified — they did not self-sign-up.
+          emailVerifiedAt: ts,
           phoneVerifiedAt: ts,
           isActive: true,
           createdAt: ts,

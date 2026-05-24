@@ -8,10 +8,18 @@ export interface UserWire {
   id: string;
   name: string;
   email: string;
-  phone: string;
+  phone: string | null; // optional at sign-up
+  email_verified: boolean;
   phone_verified: boolean;
   is_active: boolean;
   created_at: string;
+}
+
+// A channel still awaiting OTP verification (returned by register/login/verify).
+export interface PendingChannelWire {
+  channel: 'email' | 'phone';
+  target: string;
+  dev_otp?: string; // only outside production
 }
 
 export interface OrgWire {
@@ -48,13 +56,19 @@ export interface MeWire {
 export interface RegisterResultWire {
   user: UserWire;
   org: OrgWire;
-  phone_verification_required: boolean;
-  dev_otp?: string; // only outside production
+  // verification_required=false + tokens present → policy `none` (auto-verified, signed in).
+  verification_required: boolean;
+  pending: PendingChannelWire[];
+  tokens: TokensWire | null;
 }
 
+// Returned by login and verify-otp. tokens is null while verification is still pending
+// (unverified login, or policy `both` with a channel remaining); `pending` lists what's left.
 export interface AuthSessionWire {
   user: UserWire;
-  tokens: TokensWire;
+  tokens: TokensWire | null;
+  verification_required: boolean;
+  pending: PendingChannelWire[];
 }
 
 export interface PermissionDefWire {

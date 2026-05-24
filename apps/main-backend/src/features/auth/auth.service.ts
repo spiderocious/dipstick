@@ -13,6 +13,7 @@ import { ERROR_CODE } from '@shared/constants/error-codes.js';
 import type {
   MembershipDoc,
   OrgDoc,
+  OtpChannel,
   OtpDoc,
   RoleDoc,
   SessionDoc,
@@ -36,13 +37,14 @@ import {
   sessionRepo,
   userRepo,
 } from './auth.repo.mongo.js';
+import { channelTarget, isChannelVerified, isUserVerified, requiredChannels } from './verification.js';
 import { env } from '../../env.js';
 
 export interface RegisterInput {
   name: string;
   businessName: string;
   email: string;
-  phone: string;
+  phone?: string | null;
   password: string;
 }
 
@@ -51,11 +53,20 @@ export interface TokenPair {
   refresh_token: string;
 }
 
+// What a pending-verification channel looks like in the response (which channels to verify,
+// plus the dev code in non-prod so QA needn't wire a real sender).
+export interface PendingChannel {
+  channel: OtpChannel;
+  target: string;
+  devOtp: string | null;
+}
+
 const now = (): string => new Date().toISOString();
 
-// A dev-only OTP: deterministic so QA can verify without an SMS gateway (Module 1 has no
-// SMS in v1). Returned in the register/resend response when not in production.
+// A dev-only OTP: deterministic so QA can verify without an SMS/email gateway (no real sender
+// in v1). Returned in the register/resend response when not in production.
 const generateOtpCode = (): string => '000000';
+const isDev = (): boolean => env.NODE_ENV !== 'production';
 
 export class AuthService {
   private constructor(
@@ -74,15 +85,23 @@ export class AuthService {
   }
 
   // Owner sign-up: creates user + org + three seeded roles + an org-wide ('*') membership
-  // with the Owner role, atomically. Phone OTP must be verified before tokens are issued.
-  async register(
-    input: RegisterInput,
-  ): Promise<ServiceResult<{ user: UserDoc; org: OrgDoc; devOtp: string | null }>> {
+  // with the Owner role, atomically. The verification policy (env AUTH_VERIFICATION) decides
+  // whether tokens are issued immediately (`none`) or after OTP on the required channel(s).
+  async register(input: RegisterInput): Promise<
+    ServiceResult<{
+      user: UserDoc;
+      org: OrgDoc;
+      pending: PendingChannel[];
+      tokens: TokenPair | null;
+    }>
+  > {
     const email = input.email.toLowerCase();
+    const phone = input.phone && input.phone.length > 0 ? input.phone : null;
+
     if (await this.users.findByEmail(email)) {
       return fail(ERROR_CODE.CONFLICT, 'email_taken', { field: 'email' });
     }
-    if (await this.users.findByPhone(input.phone)) {
+    if (phone && (await this.users.findByPhone(phone))) {
       return fail(ERROR_CODE.CONFLICT, 'phone_taken', { field: 'phone' });
     }
 
@@ -94,8 +113,9 @@ export class AuthService {
       _id: userId,
       name: input.name,
       email,
-      phone: input.phone,
+      phone,
       passwordHash: await hashPassword(input.password),
+      emailVerifiedAt: null,
       phoneVerifiedAt: null,
       isActive: true,
       createdAt: ts,
@@ -150,17 +170,38 @@ export class AuthService {
       );
     });
 
-    const code = generateOtpCode();
-    await this.issueOtp(input.phone, userId, code);
+    // Determine what (if anything) must be verified, restricted to channels actually given.
+    const channels = requiredChannels(user);
 
-    return ok({ user, org, devOtp: env.NODE_ENV === 'production' ? null : code });
+    if (channels.length === 0) {
+      // Policy `none` (or no verifiable channel): auto-verify everything present and unlock now.
+      if (user.email) await this.users.setEmailVerified(userId, ts);
+      if (phone) await this.users.setPhoneVerified(userId, ts);
+      const verifiedUser: UserDoc = {
+        ...user,
+        emailVerifiedAt: user.email ? ts : null,
+        phoneVerifiedAt: phone ? ts : null,
+      };
+      const tokens = await this.issueTokens(userId);
+      return ok({ user: verifiedUser, org, pending: [], tokens });
+    }
+
+    // Issue an OTP per required channel.
+    const pending = await this.issuePending(user, channels);
+    return ok({ user, org, pending, tokens: null });
   }
 
-  private async issueOtp(phone: string, userId: string, code: string): Promise<void> {
-    await this.otps.deleteByPhone(phone);
+  private async issueOtp(
+    channel: OtpChannel,
+    target: string,
+    userId: string,
+    code: string,
+  ): Promise<void> {
+    await this.otps.deleteByTarget(channel, target);
     const doc: OtpDoc = {
       _id: newId('otp'),
-      phone,
+      channel,
+      target,
       userId,
       codeHash: await hashPassword(code),
       attempts: 0,
@@ -170,21 +211,45 @@ export class AuthService {
     await this.otps.insert(doc);
   }
 
-  async resendOtp(phone: string): Promise<ServiceResult<{ devOtp: string | null }>> {
-    const user = await this.users.findByPhone(phone);
-    if (!user) return fail(ERROR_CODE.NOT_FOUND, 'staff_not_found', { field: 'phone' });
-    if (user.phoneVerifiedAt) return fail(ERROR_CODE.CONFLICT, 'phone_already_verified');
-    const code = generateOtpCode();
-    await this.issueOtp(phone, user._id, code);
-    return ok({ devOtp: env.NODE_ENV === 'production' ? null : code });
+  // Issue OTPs for the given channels of a user and return the pending descriptors. Shared
+  // by register, login and verify (policy `both`) so all three return the same shape.
+  private async issuePending(user: UserDoc, channels: OtpChannel[]): Promise<PendingChannel[]> {
+    const pending: PendingChannel[] = [];
+    for (const channel of channels) {
+      const target = channelTarget(user, channel);
+      if (!target) continue;
+      const code = generateOtpCode();
+      await this.issueOtp(channel, target, user._id, code);
+      pending.push({ channel, target, devOtp: isDev() ? code : null });
+    }
+    return pending;
   }
 
+  // Resend an OTP for a channel/target. Looks the user up by the channel's address.
+  async resendOtp(
+    channel: OtpChannel,
+    target: string,
+  ): Promise<ServiceResult<{ devOtp: string | null }>> {
+    const user =
+      channel === 'email'
+        ? await this.users.findByEmail(target.toLowerCase())
+        : await this.users.findByPhone(target);
+    if (!user) return fail(ERROR_CODE.NOT_FOUND, 'staff_not_found', { field: channel });
+    if (isChannelVerified(user, channel)) return fail(ERROR_CODE.CONFLICT, 'already_verified');
+    const code = generateOtpCode();
+    await this.issueOtp(channel, target, user._id, code);
+    return ok({ devOtp: isDev() ? code : null });
+  }
+
+  // Verify a code for a channel/target. When every required channel is satisfied, tokens are
+  // issued and `pending` is empty; otherwise tokens is null and `pending` lists what remains.
   async verifyOtp(
-    phone: string,
+    channel: OtpChannel,
+    target: string,
     code: string,
-  ): Promise<ServiceResult<{ user: UserDoc; tokens: TokenPair }>> {
-    const otp = await this.otps.findLatestByPhone(phone);
-    if (!otp) return fail(ERROR_CODE.NOT_FOUND, 'otp_expired', { field: 'code' });
+  ): Promise<ServiceResult<{ user: UserDoc; tokens: TokenPair | null; pending: PendingChannel[] }>> {
+    const otp = await this.otps.findLatestByTarget(channel, target);
+    if (!otp) return fail(ERROR_CODE.NOT_FOUND, 'otp_not_found', { field: 'code' });
     if (otp.expiresAt.getTime() < Date.now()) {
       return fail(ERROR_CODE.INVALID_STATE, 'otp_expired', { field: 'code' });
     }
@@ -200,21 +265,40 @@ export class AuthService {
       return fail(ERROR_CODE.VALIDATION, 'otp_invalid', { field: 'code' });
     }
 
-    const user = await this.users.findById(otp.userId);
-    if (!user) return fail(ERROR_CODE.NOT_FOUND, 'staff_not_found');
+    const found = await this.users.findById(otp.userId);
+    if (!found) return fail(ERROR_CODE.NOT_FOUND, 'staff_not_found');
 
     const verifiedAt = now();
-    await this.users.setPhoneVerified(user._id, verifiedAt);
-    await this.otps.deleteByPhone(phone);
+    if (channel === 'email') await this.users.setEmailVerified(found._id, verifiedAt);
+    else await this.users.setPhoneVerified(found._id, verifiedAt);
+    await this.otps.deleteByTarget(channel, target);
+
+    const user: UserDoc = {
+      ...found,
+      emailVerifiedAt: channel === 'email' ? verifiedAt : found.emailVerifiedAt,
+      phoneVerifiedAt: channel === 'phone' ? verifiedAt : found.phoneVerifiedAt,
+    };
+
+    if (!isUserVerified(user)) {
+      // More channels still required (policy `both`). Issue fresh OTPs for them; no tokens yet.
+      const remaining = requiredChannels(user).filter((ch) => !isChannelVerified(user, ch));
+      const pending = await this.issuePending(user, remaining);
+      return ok({ user, tokens: null, pending });
+    }
 
     const tokens = await this.issueTokens(user._id);
-    return ok({ user: { ...user, phoneVerifiedAt: verifiedAt }, tokens });
+    return ok({ user, tokens, pending: [] });
   }
 
+  // Login. On valid credentials but an unverified account, returns success with tokens=null
+  // and the `pending` channels (so the FE routes to OTP instead of the dashboard) — it
+  // re-issues fresh OTPs for those channels. Bad credentials / inactive still fail.
   async login(
     email: string,
     password: string,
-  ): Promise<ServiceResult<{ user: UserDoc; tokens: TokenPair }>> {
+  ): Promise<
+    ServiceResult<{ user: UserDoc; tokens: TokenPair | null; pending: PendingChannel[] }>
+  > {
     const user = await this.users.findByEmail(email.toLowerCase());
     // Same message + code whether the email is unknown or the password is wrong — never
     // reveal which. Field points at email so the form focuses the first input.
@@ -224,11 +308,16 @@ export class AuthService {
     if (!valid) {
       return fail(ERROR_CODE.UNAUTHENTICATED, 'invalid_credentials', { field: 'email' });
     }
-    if (!user.phoneVerifiedAt) {
-      return fail(ERROR_CODE.FORBIDDEN, 'phone_unverified', { field: 'phone' });
+
+    if (!isUserVerified(user)) {
+      // Re-issue OTPs for the still-unverified required channels and tell the FE to verify.
+      const remaining = requiredChannels(user).filter((ch) => !isChannelVerified(user, ch));
+      const pending = await this.issuePending(user, remaining);
+      return ok({ user, tokens: null, pending });
     }
+
     const tokens = await this.issueTokens(user._id);
-    return ok({ user, tokens });
+    return ok({ user, tokens, pending: [] });
   }
 
   async refresh(refreshToken: string): Promise<ServiceResult<TokenPair>> {

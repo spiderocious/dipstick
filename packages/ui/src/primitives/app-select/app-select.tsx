@@ -17,6 +17,8 @@ export type AppSelectSize = 'sm' | 'md' | 'lg';
 export interface AppSelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   fieldSize?: AppSelectSize;
   invalid?: boolean;
+  /** Override the outer wrapper width/layout (defaults to a 200px min-width). */
+  wrapperClassName?: string;
 }
 
 const SIZE_CLASSES: Record<AppSelectSize, string> = {
@@ -26,11 +28,11 @@ const SIZE_CLASSES: Record<AppSelectSize, string> = {
 };
 
 export const AppSelect = forwardRef<HTMLSelectElement, AppSelectProps>(function AppSelect(
-  { fieldSize = 'md', invalid, className, children, disabled, ...rest },
+  { fieldSize = 'md', invalid, className, wrapperClassName, children, disabled, ...rest },
   ref,
 ) {
   return (
-    <div className="relative inline-flex min-w-[200px]">
+    <div className={cn('relative inline-flex', wrapperClassName ?? 'min-w-[200px]')}>
       <select
         ref={ref}
         disabled={disabled}

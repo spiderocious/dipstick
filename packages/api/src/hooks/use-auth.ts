@@ -68,8 +68,11 @@ export function useVerifyOtp() {
       return res.data;
     },
     onSuccess: (data) => {
-      persistTokens(data.tokens);
-      void qc.invalidateQueries({ queryKey: QK.me() });
+      // tokens may be null when another channel still needs verifying (policy `both`).
+      if (data.tokens) {
+        persistTokens(data.tokens);
+        void qc.invalidateQueries({ queryKey: QK.me() });
+      }
     },
   });
 }
@@ -95,8 +98,11 @@ export function useLogin() {
       return res.data;
     },
     onSuccess: (data) => {
-      persistTokens(data.tokens);
-      void qc.invalidateQueries({ queryKey: QK.me() });
+      // tokens null → account unverified; the screen routes to OTP instead of signing in.
+      if (data.tokens) {
+        persistTokens(data.tokens);
+        void qc.invalidateQueries({ queryKey: QK.me() });
+      }
     },
   });
 }

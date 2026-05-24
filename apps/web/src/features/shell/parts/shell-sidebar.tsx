@@ -2,6 +2,7 @@ import { ROUTES } from '@dipstick/core';
 import { Link, useLocation } from 'react-router-dom';
 
 import { cn } from '@dipstick/ui';
+import { IconBack, IconClose } from '@icons';
 
 import { useAuth } from '@shared/auth';
 
@@ -9,31 +10,48 @@ import { NAV_GROUPS, NAV_ITEMS, type NavGroup, type NavItem } from '../shell.nav
 
 interface ShellSidebarProps {
   readonly branchId: string;
+  readonly branchName: string;
+  /** Mobile drawer open state. */
+  readonly open: boolean;
+  readonly onClose: () => void;
 }
 
-export function ShellSidebar({ branchId }: ShellSidebarProps) {
+export function ShellSidebar({ branchId, branchName, open, onClose }: ShellSidebarProps) {
   const { can } = useAuth();
   const { pathname } = useLocation();
 
-  const visible = NAV_ITEMS.filter((item) => {
-    if (item.permission !== undefined && !can(item.permission)) return false;
-    // Branch-scoped items need a branch to point at.
-    if (item.scope === 'branch' && branchId === '') return false;
-    return true;
-  });
+  const visible = NAV_ITEMS.filter(
+    (item) => item.permission === undefined || can(item.permission),
+  );
 
-  return (
-    <aside className="flex h-screen w-[240px] flex-shrink-0 flex-col border-r border-sheet-edge bg-paper">
-      <div className="px-6 pt-7">
-        <Link to={ROUTES.DASHBOARD} className="font-serif text-[22px] font-semibold tracking-[-0.02em] text-ink">
-          Dipstick<span className="text-emerald">.</span>
-        </Link>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-tertiary">
-          Station logbook
-        </p>
+  const inner = (showClose: boolean) => (
+    <div className="flex h-full flex-col">
+      <div className="flex items-start px-5 pt-6">
+        <div className="min-w-0">
+          <Link
+            to={ROUTES.BRANCHES}
+            className="inline-flex items-center gap-1.5 font-sans text-[12px] text-ink-tertiary hover:text-ink"
+          >
+            <IconBack size={14} aria-hidden="true" />
+            All branches
+          </Link>
+          <p className="mt-3 font-serif text-[18px] font-semibold leading-tight tracking-[-0.015em] text-ink">
+            {branchName !== '' ? branchName : 'Branch'}
+          </p>
+        </div>
+        {showClose && (
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={onClose}
+            className="ml-auto -mr-1 p-1 text-ink-tertiary hover:text-ink lg:hidden"
+          >
+            <IconClose size={18} aria-hidden="true" />
+          </button>
+        )}
       </div>
 
-      <nav className="mt-6 flex-1 overflow-y-auto px-3 pb-8">
+      <nav className="mt-5 flex-1 overflow-y-auto px-3 pb-8">
         {NAV_GROUPS.map((group) => {
           const items = visible.filter((i) => i.group === group);
           if (items.length === 0) return null;
@@ -42,7 +60,35 @@ export function ShellSidebar({ branchId }: ShellSidebarProps) {
           );
         })}
       </nav>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop: static column */}
+      <aside className="hidden h-screen w-[240px] flex-shrink-0 flex-col border-r border-sheet-edge bg-paper lg:flex">
+        {inner(false)}
+      </aside>
+
+      {/* Mobile: scrim + slide-in drawer */}
+      <div
+        className={cn(
+          'fixed inset-0 z-[1200] bg-ink/30 transition-opacity lg:hidden',
+          open ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-[1300] flex w-[260px] max-w-[82%] flex-col border-r border-sheet-edge bg-paper transition-transform lg:hidden',
+          open ? 'translate-x-0' : '-translate-x-full',
+        )}
+        aria-hidden={!open}
+      >
+        {inner(true)}
+      </aside>
+    </>
   );
 }
 

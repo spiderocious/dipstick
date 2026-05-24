@@ -1,0 +1,15 @@
+export const EXPENSES_COPY = {
+  overline: 'Expenses',
+  title: 'Cash out of the till.',
+  add: 'Add expense',
+  emptyTitle: 'No expenses recorded.',
+  emptyBody: 'Add a cash expense paid from the till.',
+  all: 'All',
+  singleSource: 'Single-source',
+  addedMark: '✓ EXPENSE ADDED',
+  categoryLabel: 'Category',
+  descriptionLabel: 'What was paid for',
+  amountLabel: 'Amount (₦)',
+  witnessLabel: 'Witness (optional)',
+  save: 'Record expense',
+} as const;

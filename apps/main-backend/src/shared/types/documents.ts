@@ -23,8 +23,10 @@ interface BaseDoc {
 export interface UserDoc extends BaseDoc {
   name: string;
   email: string;
-  phone: string;
+  // Phone is optional (validated only when present). Null when the owner signed up without one.
+  phone: string | null;
   passwordHash: string;
+  emailVerifiedAt: string | null;
   phoneVerifiedAt: string | null;
   isActive: boolean;
 }
@@ -209,9 +211,15 @@ export interface AuditDoc {
   at: string;
 }
 
+// Generic OTP — keyed by (channel, target) so the same machinery serves email, phone, and
+// any future channel (WhatsApp, etc.). `target` is the normalized address (email lowercased,
+// phone as given). The previous phone-only shape is subsumed by channel='phone'.
+export type OtpChannel = 'email' | 'phone';
+
 export interface OtpDoc {
   _id: string;
-  phone: string;
+  channel: OtpChannel;
+  target: string;
   userId: string;
   codeHash: string;
   attempts: number;

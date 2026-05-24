@@ -4,7 +4,7 @@
 > **Date:** 2026-05-24
 > **Scope:** Every `/api/v1` endpoint of `apps/main-backend` — auth, RBAC/roles, branches (tanks/pumps), staff (roster/leaderboard), shifts (dips/reconcile/post/void/post-balanced), deliveries (4-stage), pricing (preview/pin/history), expenses, rollup/trends, notes, audit, notifications, health. Simple (happy-path) cases AND extreme cases (boundaries, bad types, state machines, concurrency-sensitive invariants, cross-tenant, RBAC).
 > **Status:** READY — written from source review; not yet executed (no server run).
-> **Base URL:** `http://localhost:8081/api/v1`
+> **Base URL:** `http://localhost:8091/api/v1`
 > **Auth header:** `Authorization: Bearer <access_token>`
 > **Refs:** `docs/api-docs.md` · `docs/qas/qa-handoff.md` · source `apps/main-backend/src/features/*` (ground truth)
 > **Legend:** `[HP]` happy path · `[EG]` edge/boundary · `[SEC]` auth/security · `[RBAC]` role enforcement · `[SM]` state machine · `[VAR]` arithmetic/variance · `[PAG]` pagination · `[ENV]` error-contract/envelope · `[BUG]` suspected defect · `[DIV]` doc/code divergence to confirm
@@ -22,8 +22,8 @@ This is the test surface. A QA engineer should be able to exercise the whole API
 # Standalone Mongo is fine: the backend degrades to non-transactional writes and logs a warning.
 # Multi-doc atomicity (register, delivery sign) is only guaranteed on a replica set.
 pnpm install
-pnpm nx serve main-backend        # http://localhost:8081
-curl -s http://localhost:8081/api/v1/health   # must return 200 { data: { status: "ok", ... } }
+pnpm nx serve main-backend        # http://localhost:8091
+curl -s http://localhost:8091/api/v1/health   # must return 200 { data: { status: "ok", ... } }
 ```
 
 If `/health` does not return 200, **stop** — do not mark anything PASS. There is **no seed script**; all data is bootstrapped through the API (§2). Dev OTP is always **`000000`** (env `NODE_ENV != production`), surfaced in register/resend responses as `dev_otp`.

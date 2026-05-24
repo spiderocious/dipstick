@@ -41,6 +41,9 @@ export const userRepo: UserRepo = {
   insert: async (doc, tx) => {
     await users().insertOne(doc, sess(tx));
   },
+  setEmailVerified: async (id, at) => {
+    await users().updateOne({ _id: id }, { $set: { emailVerifiedAt: at, updatedAt: at } });
+  },
   setPhoneVerified: async (id, at) => {
     await users().updateOne({ _id: id }, { $set: { phoneVerifiedAt: at, updatedAt: at } });
   },
@@ -118,12 +121,13 @@ export const otpRepo: OtpRepo = {
   insert: async (doc) => {
     await otps().insertOne(doc);
   },
-  findLatestByPhone: (phone) => otps().find({ phone }).sort({ createdAt: -1 }).limit(1).next(),
+  findLatestByTarget: (channel, target) =>
+    otps().find({ channel, target }).sort({ createdAt: -1 }).limit(1).next(),
   incrementAttempts: async (id) => {
     await otps().updateOne({ _id: id }, { $inc: { attempts: 1 } });
   },
-  deleteByPhone: async (phone) => {
-    await otps().deleteMany({ phone });
+  deleteByTarget: async (channel, target) => {
+    await otps().deleteMany({ channel, target });
   },
 };
 

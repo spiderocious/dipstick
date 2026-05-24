@@ -1,20 +1,25 @@
 // Request payloads — exact snake_case bodies the backend expects (docs/api-docs.md).
 
+// The verification channel for OTP flows.
+export type OtpChannel = 'email' | 'phone';
+
 export interface RegisterPayload {
   name: string;
   business_name: string;
   email: string;
-  phone: string;
+  phone?: string; // optional — validated only when present
   password: string;
 }
 
 export interface VerifyOtpPayload {
-  phone: string;
+  channel: OtpChannel;
+  target: string; // the email or phone being verified
   code: string;
 }
 
 export interface ResendOtpPayload {
-  phone: string;
+  channel: OtpChannel;
+  target: string;
 }
 
 export interface LoginPayload {

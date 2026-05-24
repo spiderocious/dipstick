@@ -1,1 +1,1 @@
-export { PageHead, PageBody, QueryState } from './page.tsx';
+export { PageHead, PageBody, QueryState, ScrollX } from './page.tsx';

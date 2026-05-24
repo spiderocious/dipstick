@@ -4,7 +4,7 @@
 > **Date:** 2026-05-24 (updated after full run on the BUG-01 fix)
 > **Test suite:** `docs/qas/backend/scripts/` (bootstrap + 12 feature suites, shared `api.mjs`/`runner.mjs`)
 > **Plan:** `docs/qas/backend/plans/test-plan.md`
-> **Server:** `apps/main-backend` @ `localhost:8081`, MongoDB standalone @ `mongodb://127.0.0.1:27017` (`dipstick` db)
+> **Server:** `apps/main-backend` @ `localhost:8091`, MongoDB standalone @ `mongodb://127.0.0.1:27017` (`dipstick` db)
 > **Run status:** Full suite executed — **267 PASS / 3 FAIL / 1 SKIP** (271 run). The 3 FAILs are the bugs below.
 
 ---

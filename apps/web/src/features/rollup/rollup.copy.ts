@@ -4,6 +4,7 @@ import type { AppPillTone } from '@dipstick/ui';
 export const ROLLUP_COPY = {
   overline: 'Morning roll-up',
   title: 'Yesterday, across every branch.',
+  backToBranches: 'Branches',
   litres: 'Litres sold',
   gross: 'Gross',
   variance: 'Net variance',

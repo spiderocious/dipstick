@@ -5,31 +5,42 @@ import { z } from 'zod';
 // appears earliest in the submitted body, so declare fields in the order a form presents them.
 
 const email = z.string({ required_error: 'Email is required' }).email('Enter a valid email address');
-const phone = z
-  .string({ required_error: 'Phone number is required' })
+// Phone is OPTIONAL — validated only when a value is present.
+const phoneOptional = z
+  .string()
   .min(10, 'Enter a valid phone number')
-  .max(20, 'Enter a valid phone number');
+  .max(20, 'Enter a valid phone number')
+  .optional();
 const password = z
   .string({ required_error: 'Password is required' })
   .min(8, 'Password must be at least 8 characters');
 const name = z.string({ required_error: 'Name is required' }).min(2, 'Enter your full name');
 
+const channel = z.enum(['email', 'phone'], {
+  errorMap: () => ({ message: 'Channel must be email or phone' }),
+});
+
 export const RegisterBody = z.object({
   name,
   business_name: z.string({ required_error: 'Business name is required' }).min(2, 'Enter your business name'),
   email,
-  phone,
+  phone: phoneOptional,
   password,
 });
 export type RegisterBody = z.infer<typeof RegisterBody>;
 
+// Verify/resend are channel-aware: which channel + the address being verified.
 export const VerifyOtpBody = z.object({
-  phone,
+  channel,
+  target: z.string({ required_error: 'Target is required' }).min(3, 'Enter the email or phone'),
   code: z.string({ required_error: 'Enter the 6-digit code' }).length(6, 'The code is 6 digits'),
 });
 export type VerifyOtpBody = z.infer<typeof VerifyOtpBody>;
 
-export const ResendOtpBody = z.object({ phone });
+export const ResendOtpBody = z.object({
+  channel,
+  target: z.string({ required_error: 'Target is required' }).min(3, 'Enter the email or phone'),
+});
 export type ResendOtpBody = z.infer<typeof ResendOtpBody>;
 
 export const LoginBody = z.object({ email, password });

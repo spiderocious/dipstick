@@ -53,7 +53,7 @@ export const buildApp = (): express.Express => {
   app.use(helmet());
   app.use(
     cors({
-      origin: env.WEB_BASE_URL === '*' ? true : env.WEB_BASE_URL,
+      origin: "*",
       credentials: true,
     }),
   );
