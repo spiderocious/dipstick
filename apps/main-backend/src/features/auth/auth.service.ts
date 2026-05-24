@@ -20,6 +20,14 @@ import type {
 } from '@shared/types/documents.js';
 
 import { auditService, type AuditService } from '../audit/audit.service.js';
+import type {
+  MembershipRepo,
+  OrgRepo,
+  OtpRepo,
+  RoleRepo,
+  SessionRepo,
+  UserRepo,
+} from './auth.repo.js';
 import {
   membershipRepo,
   orgRepo,
@@ -27,12 +35,6 @@ import {
   roleRepo,
   sessionRepo,
   userRepo,
-  type MembershipRepo,
-  type OrgRepo,
-  type OtpRepo,
-  type RoleRepo,
-  type SessionRepo,
-  type UserRepo,
 } from './auth.repo.mongo.js';
 import { env } from '../../env.js';
 
@@ -246,9 +248,9 @@ export class AuthService {
   }
 
   private async issueTokens(userId: string): Promise<TokenPair> {
-    const memberships = await this.memberships.findByUser(userId);
+    const userMemberships: MembershipDoc[] = await this.memberships.findByUser(userId);
     // A user always has at least the org-wide membership; pick its org for the token.
-    const orgId = memberships[0]?.orgId ?? '';
+    const orgId = userMemberships[0]?.orgId ?? '';
     const sessionId = newId('session');
     const refreshMs = 30 * 24 * 60 * 60 * 1000;
     const session: SessionDoc = {
@@ -284,12 +286,16 @@ export class AuthService {
 
   async updateOrg(
     orgId: string,
-    patch: { name?: string; wordmark?: string | null },
+    patch: { name?: string | undefined; wordmark?: string | null | undefined },
     actorId: string,
   ): Promise<ServiceResult<OrgDoc>> {
     const org = await this.orgs.findById(orgId);
     if (!org) return fail(ERROR_CODE.NOT_FOUND, 'org_not_found');
-    await this.orgs.update(orgId, patch);
+    // Drop undefined keys so exactOptionalPropertyTypes is satisfied at the repo boundary.
+    const clean: { name?: string; wordmark?: string | null } = {};
+    if (patch.name !== undefined) clean.name = patch.name;
+    if (patch.wordmark !== undefined) clean.wordmark = patch.wordmark;
+    await this.orgs.update(orgId, clean);
     await this.audit.record({
       orgId,
       actorId,

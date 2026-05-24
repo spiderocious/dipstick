@@ -96,11 +96,13 @@ export const authController = {
   },
 
   // The permission catalogue + descriptions — drives the role-builder UI.
-  permissions: (_req: Request, res: Response): Response =>
-    ResponseUtil.ok(res, {
-      permissions: Object.values(P).map((key) => ({
-        key,
-        description: PERMISSION_DESCRIPTIONS[key],
-      })),
-    }),
+  permissions: (_req: Request, res: Response): Promise<Response> =>
+    Promise.resolve(
+      ResponseUtil.ok(res, {
+        permissions: Object.values(P).map((key) => ({
+          key,
+          description: PERMISSION_DESCRIPTIONS[key],
+        })),
+      }),
+    ),
 };

@@ -22,13 +22,25 @@ const noopStorage: TokenStorage = {
   remove: () => undefined,
 };
 
+// Reach localStorage through globalThis so this module typechecks under both DOM and Node
+// lib configs (core is consumed by the browser apps AND the Node backend).
+interface WebStorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+const getLocalStorage = (): WebStorageLike | null => {
+  const g = globalThis as { localStorage?: WebStorageLike };
+  return g.localStorage ?? null;
+};
+
 export const createTokenStorage = (): TokenStorage => {
-  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
-    return noopStorage;
-  }
+  const ls = getLocalStorage();
+  if (!ls) return noopStorage;
   return {
-    get: (key) => window.localStorage.getItem(key),
-    set: (key, value) => window.localStorage.setItem(key, value),
-    remove: (key) => window.localStorage.removeItem(key),
+    get: (key) => ls.getItem(key),
+    set: (key, value) => ls.setItem(key, value),
+    remove: (key) => ls.removeItem(key),
   };
 };
