@@ -61,7 +61,7 @@ function RecordDeliveryForm({ branchId, close }: { readonly branchId: string; re
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FieldRow label={RECORD_DELIVERY_COPY.product} htmlFor={FIELD.product} error={fieldError(FIELD.product)}>
           <AppSelect id={FIELD.product} value={product} onChange={(e) => setProduct(e.target.value)}>
             {PRODUCTS.map((p) => (
@@ -87,7 +87,7 @@ function RecordDeliveryForm({ branchId, close }: { readonly branchId: string; re
         <AppInput id={FIELD.waybill_number} value={waybill} onChange={(e) => setWaybill(e.target.value)} />
       </FieldRow>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FieldRow label={RECORD_DELIVERY_COPY.supplier} htmlFor={FIELD.supplier} error={fieldError(FIELD.supplier)}>
           <AppInput id={FIELD.supplier} value={supplier} onChange={(e) => setSupplier(e.target.value)} />
         </FieldRow>

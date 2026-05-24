@@ -38,7 +38,7 @@ function AddStaffForm({ branchId, close }: { readonly branchId: string; readonly
       <FieldRow label={STAFF_COPY.nameLabel} htmlFor={FIELD.name} error={fieldError(FIELD.name)}>
         <AppInput id={FIELD.name} value={name} onChange={(e) => setName(e.target.value)} />
       </FieldRow>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FieldRow label={STAFF_COPY.emailLabel} htmlFor={FIELD.email} error={fieldError(FIELD.email)}>
           <AppInput id={FIELD.email} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </FieldRow>

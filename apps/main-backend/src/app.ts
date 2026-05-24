@@ -22,8 +22,6 @@ import { requestLogMiddleware } from '@middlewares/requestLog.middleware.js';
 
 import { ERROR_CODE } from '@shared/constants/error-codes.js';
 
-import { env } from './env.js';
-
 // Registration order: routers that mount specific sub-paths under /api/v1/branches
 // (staff, pricing, shifts, deliveries, audit) come BEFORE the branches router, whose
 // /:branchId catch-all would otherwise shadow nothing (different segment counts) but we

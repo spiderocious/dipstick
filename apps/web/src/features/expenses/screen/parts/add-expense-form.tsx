@@ -54,7 +54,7 @@ function AddExpenseForm({ branchId, close }: { readonly branchId: string; readon
       <FieldRow label={EXPENSES_COPY.descriptionLabel} htmlFor={FIELD.description} error={fieldError(FIELD.description)}>
         <AppInput id={FIELD.description} value={description} onChange={(e) => setDescription(e.target.value)} />
       </FieldRow>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FieldRow label={EXPENSES_COPY.amountLabel} htmlFor={FIELD.amount_kobo} error={fieldError(FIELD.amount_kobo)}>
           <AppInput id={FIELD.amount_kobo} numeric inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} leadingAffix="₦" />
         </FieldRow>

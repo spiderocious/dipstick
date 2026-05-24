@@ -52,7 +52,7 @@ function SetPriceForm({ branchId, initialProduct, close }: { readonly branchId: 
 
   return (
     <form onSubmit={handleConfirm} className="flex flex-col gap-4" noValidate>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FieldRow label={SET_PRICE_COPY.product} htmlFor={FIELD.product} error={fieldError(FIELD.product)}>
           <AppSelect id={FIELD.product} value={product} onChange={(e) => setProduct(e.target.value)}>
             {PRODUCTS.map((p) => (
