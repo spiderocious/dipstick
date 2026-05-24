@@ -99,26 +99,25 @@ export function StaffScreen() {
 
 function StaffRow({ member }: { readonly member: StaffMemberWire }) {
   return (
-    <div className="flex items-center gap-4 border-b border-hair bg-sheet px-5 py-3.5 last:border-b-0">
+    <div className="flex items-center gap-3 border-b border-hair bg-sheet px-4 py-3.5 last:border-b-0 sm:gap-4 sm:px-5">
       <AppAvatar name={member.user.name} role={avatarRole(member.role_name)} />
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="font-serif text-[15px] font-medium text-ink">{member.user.name}</span>
+          <AppPill tone="ink">{member.role_name}</AppPill>
           {!member.is_active && <AppPill tone="paper">Inactive</AppPill>}
         </div>
-        <div className="mt-0.5 font-mono text-[11px] text-ink-tertiary">{member.user.phone}</div>
+        <div className="mt-0.5 font-mono text-[11px] text-ink-tertiary">{member.user.phone ?? member.user.email}</div>
       </div>
-      <AppPill tone="ink" className="ml-2">
-        {member.role_name}
-      </AppPill>
-      <span className="ml-auto font-mono text-[12px] tabular-nums text-ink-secondary">
+      {/* 30-day stats — secondary detail, hidden on the narrowest phones */}
+      <span className="hidden flex-shrink-0 font-mono text-[12px] tabular-nums text-ink-secondary sm:inline">
         {member.shift_count_30d} shifts
       </span>
       <span
         className={
           member.variance_kobo_30d > 0
-            ? 'w-28 text-right font-mono text-[12px] font-semibold tabular-nums text-oxblood'
-            : 'w-28 text-right font-mono text-[12px] tabular-nums text-emerald'
+            ? 'flex-shrink-0 font-mono text-[12px] font-semibold tabular-nums text-oxblood sm:w-28 sm:text-right'
+            : 'flex-shrink-0 font-mono text-[12px] tabular-nums text-emerald sm:w-28 sm:text-right'
         }
       >
         {member.variance_kobo_30d === 0 ? '₦0.00' : formatNaira(-member.variance_kobo_30d)}

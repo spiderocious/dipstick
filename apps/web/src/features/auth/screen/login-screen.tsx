@@ -8,6 +8,7 @@ import { useApiError } from '@shared/errors';
 import { DrawerService } from '@shared/drawer';
 
 import { AUTH_TOAST, LOGIN_COPY } from '../auth.copy.ts';
+import { setPendingVerification } from '../utils/pending-verification.ts';
 import { AuthShell } from './parts/auth-shell.tsx';
 
 const FIELD = { email: 'email', password: 'password' } as const;
@@ -26,7 +27,20 @@ export function LoginScreen() {
     login.mutate(
       { email, password },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          // Unverified account: backend returns tokens=null + the channels to verify. Route
+          // to OTP instead of the dashboard (which would have no session).
+          if (data.tokens === null || data.verification_required) {
+            setPendingVerification({
+              channels: data.pending.map((p) => ({
+                channel: p.channel,
+                target: p.target,
+                ...(p.dev_otp !== undefined ? { devOtp: p.dev_otp } : {}),
+              })),
+            });
+            navigate(ROUTES.VERIFY, { replace: true });
+            return;
+          }
           DrawerService.toast(LOGIN_COPY.title, { mark: AUTH_TOAST.signedInMark });
           navigate(ROUTES.BRANCHES, { replace: true });
         },

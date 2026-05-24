@@ -33,12 +33,32 @@ export function RegisterScreen() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     clearError();
+    const trimmedPhone = phone.trim();
     register.mutate(
-      { name, business_name: businessName, email, phone, password },
+      {
+        name,
+        business_name: businessName,
+        email,
+        // Phone is optional — only send it when the user typed one (else it fails min-length).
+        ...(trimmedPhone.length > 0 ? { phone: trimmedPhone } : {}),
+        password,
+      },
       {
         onSuccess: (data) => {
-          setPendingVerification({ phone: data.user.phone, devOtp: data.dev_otp });
           DrawerService.toast(REGISTER_COPY.title, { mark: AUTH_TOAST.registeredMark });
+          // Policy `none`: tokens already issued, nothing to verify → straight in.
+          if (!data.verification_required && data.tokens !== null) {
+            navigate(ROUTES.BRANCHES, { replace: true });
+            return;
+          }
+          // Otherwise queue the pending channels (email/phone) for the verify screen.
+          setPendingVerification({
+            channels: data.pending.map((p) => ({
+              channel: p.channel,
+              target: p.target,
+              ...(p.dev_otp !== undefined ? { devOtp: p.dev_otp } : {}),
+            })),
+          });
           navigate(ROUTES.VERIFY);
         },
         onError: handleError,

@@ -32,7 +32,7 @@ export function PricingScreen() {
       />
       <QueryState isLoading={query.isLoading} isError={query.isError} data={query.data}>
         {(items) => (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {items.map((row) => (
               <AppSheet key={row.product} pad="md">
                 <SheetHead title={<AppProductMark product={row.product as Product} />} />

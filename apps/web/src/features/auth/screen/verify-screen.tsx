@@ -11,6 +11,7 @@ import { AUTH_TOAST, VERIFY_COPY } from '../auth.copy.ts';
 import {
   clearPendingVerification,
   getPendingVerification,
+  setPendingVerification,
   type PendingVerification,
 } from '../utils/pending-verification.ts';
 import { AuthShell } from './parts/auth-shell.tsx';
@@ -30,20 +31,39 @@ export function VerifyScreen() {
     setPending(getPendingVerification());
   }, []);
 
-  // No phone in flight → nothing to verify; send the user to register.
+  // Nothing in the verification queue → nothing to verify; send the user to register.
   if (pending === null) return <Navigate to={ROUTES.REGISTER} replace />;
+
+  // Verify the head of the queue (policy `both` may have two channels; worked in order).
+  const current = pending.channels[0];
+  if (current === undefined) return <Navigate to={ROUTES.REGISTER} replace />;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (pending === null) return;
+    if (current === undefined) return;
     clearError();
     verify.mutate(
-      { phone: pending.phone, code },
+      { channel: current.channel, target: current.target, code },
       {
-        onSuccess: () => {
-          clearPendingVerification();
+        onSuccess: (data) => {
           DrawerService.toast(VERIFY_COPY.title, { mark: AUTH_TOAST.verifiedMark });
-          navigate(ROUTES.BRANCHES, { replace: true });
+          // Done (tokens issued / queue empty) → into the app.
+          if (!data.verification_required || data.tokens !== null || data.pending.length === 0) {
+            clearPendingVerification();
+            navigate(ROUTES.BRANCHES, { replace: true });
+            return;
+          }
+          // More channels remain (policy `both`): advance the queue, clear the field.
+          const next: PendingVerification = {
+            channels: data.pending.map((p) => ({
+              channel: p.channel,
+              target: p.target,
+              ...(p.dev_otp !== undefined ? { devOtp: p.dev_otp } : {}),
+            })),
+          };
+          setPendingVerification(next);
+          setPending(next);
+          setCode('');
         },
         onError: handleError,
       },
@@ -51,12 +71,20 @@ export function VerifyScreen() {
   }
 
   function handleResend() {
-    if (pending === null) return;
+    if (current === undefined || pending === null) return;
+    const queue = pending.channels;
     resend.mutate(
-      { phone: pending.phone },
+      { channel: current.channel, target: current.target },
       {
         onSuccess: (data) => {
-          if (data.dev_otp !== undefined) setPending({ ...pending, devOtp: data.dev_otp });
+          if (data.dev_otp !== undefined) {
+            const devOtp = data.dev_otp;
+            const updated: PendingVerification = {
+              channels: queue.map((c, i) => (i === 0 ? { ...c, devOtp } : c)),
+            };
+            setPendingVerification(updated);
+            setPending(updated);
+          }
           DrawerService.toast(VERIFY_COPY.resend, { mark: AUTH_TOAST.resentMark });
         },
         onError: handleError,
@@ -68,14 +96,14 @@ export function VerifyScreen() {
     <AuthShell
       overline={VERIFY_COPY.overline}
       title={VERIFY_COPY.title}
-      subtitle={`${VERIFY_COPY.subtitlePrefix}${pending.phone}.`}
+      subtitle={`${VERIFY_COPY.subtitlePrefix}${current.target}.`}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <FieldRow
           label={VERIFY_COPY.codeLabel}
           htmlFor={FIELD.code}
           error={fieldError(FIELD.code)}
-          help={pending.devOtp !== undefined ? `${VERIFY_COPY.devNotePrefix}${pending.devOtp}` : undefined}
+          help={current.devOtp !== undefined ? `${VERIFY_COPY.devNotePrefix}${current.devOtp}` : undefined}
         >
           <AppInput
             id={FIELD.code}

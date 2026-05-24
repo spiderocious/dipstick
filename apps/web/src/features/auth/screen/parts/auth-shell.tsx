@@ -12,7 +12,7 @@ interface AuthShellProps {
 
 export function AuthShell({ overline, title, subtitle, children, footer }: AuthShellProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-paper px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-paper px-4 py-12 sm:px-6">
       <div className="w-full max-w-[400px]">
         <div className="mb-7 text-center">
           <span className="font-serif text-[26px] font-semibold tracking-[-0.02em] text-ink">

@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 
 import { useAuth } from '@shared/auth';
 import { DrawerService } from '@shared/drawer';
-import { PageBody, PageHead, QueryState } from '@shared/screen';
+import { PageBody, PageHead, QueryState, ScrollX } from '@shared/screen';
 import { weekStartOf } from '@shared/format';
 import { SHIFT_WINDOW_SHORT } from '@shared/copy/labels.ts';
 
@@ -80,9 +80,10 @@ export function RosterScreen() {
       <QueryState isLoading={staff.isLoading} isError={staff.isError} data={staff.data}>
         {(members) => (
           <AppSheet pad="md">
+           <ScrollX>
             <div
-              className="grid items-center gap-2"
-              style={{ gridTemplateColumns: `180px repeat(${DAYS_IN_WEEK}, 1fr)` }}
+              className="grid min-w-[640px] items-center gap-2"
+              style={{ gridTemplateColumns: `140px repeat(${DAYS_IN_WEEK}, 1fr)` }}
             >
               <span />
               {ROSTER_COPY.days.map((d) => (
@@ -102,6 +103,7 @@ export function RosterScreen() {
                 />
               ))}
             </div>
+           </ScrollX>
           </AppSheet>
         )}
       </QueryState>
