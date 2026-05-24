@@ -2,6 +2,7 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
+import { sessionOpts } from '@db/transaction.js';
 import { buildPage, decodeCursor } from '@lib/pagination.js';
 import type { NoteDoc } from '@shared/types/documents.js';
 
@@ -11,7 +12,7 @@ const notes = (): Collection<NoteDoc> => getDb().collection<NoteDoc>(COLLECTION.
 
 export const noteRepo: NoteRepo = {
   insert: async (doc, tx) => {
-    await notes().insertOne(doc, tx ? { session: tx.session } : {});
+    await notes().insertOne(doc, sessionOpts(tx));
   },
   listByEntity: async (query) => {
     const filter: Record<string, unknown> = {

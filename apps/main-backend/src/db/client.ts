@@ -14,6 +14,11 @@ export const connectDb = async (): Promise<Db> => {
   client = new MongoClient(env.MONGO_URL, {
     // Keep the wire-protocol surface small and predictable across DB swaps.
     ignoreUndefined: true,
+    // Standalone Mongo (dev/CI) rejects retryable writes (the driver defaults retryWrites=true)
+    // with the same IllegalOperation class as transactions. Disable it so single-node dev works;
+    // it is a no-op for correctness on a replica set (just skips the one automatic retry).
+    // An explicit retryWrites in MONGO_URL still wins over this default.
+    retryWrites: false,
   });
   await client.connect();
   db = client.db(env.MONGO_DB_NAME);

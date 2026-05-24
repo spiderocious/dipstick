@@ -22,13 +22,15 @@ export class ResponseUtil {
   }
 
   // Flat error shape. `status` defaults from the code's metadata but may be overridden.
+  // `retryAfter` (seconds) sets the Retry-After header — used for rate-limit responses.
   static error(
     res: Response,
     code: ErrorCode,
     message: string,
-    opts: { status?: number; field?: string } = {},
+    opts: { status?: number; field?: string; retryAfter?: number } = {},
   ): Response {
     const meta = ERROR_CODE_META[code];
+    if (opts.retryAfter !== undefined) res.setHeader('Retry-After', opts.retryAfter);
     const body: ApiErrorBody = {
       errorCode: code,
       errorMessage: message,

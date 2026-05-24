@@ -3,12 +3,12 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
-import type { Tx } from '@db/transaction.js';
+import { sessionOpts } from '@db/transaction.js';
 import type { DipDoc, ShiftDoc } from '@shared/types/documents.js';
 
 import type { DipRepo, ShiftRepo } from './shifts.repo.js';
 
-const sess = (tx?: Tx) => (tx ? { session: tx.session } : {});
+const sess = sessionOpts;
 const shifts = (): Collection<ShiftDoc> => getDb().collection<ShiftDoc>(COLLECTION.shifts);
 const dips = (): Collection<DipDoc> => getDb().collection<DipDoc>(COLLECTION.dips);
 

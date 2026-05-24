@@ -2,13 +2,13 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
-import type { Tx } from '@db/transaction.js';
+import { sessionOpts } from '@db/transaction.js';
 import { buildPage, decodeCursor } from '@lib/pagination.js';
 import type { DeliveryDoc } from '@shared/types/documents.js';
 
 import type { DeliveryRepo } from './deliveries.repo.js';
 
-const sess = (tx?: Tx) => (tx ? { session: tx.session } : {});
+const sess = sessionOpts;
 const deliveries = (): Collection<DeliveryDoc> =>
   getDb().collection<DeliveryDoc>(COLLECTION.deliveries);
 

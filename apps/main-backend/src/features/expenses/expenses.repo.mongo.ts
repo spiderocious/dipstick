@@ -2,6 +2,7 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
+import { sessionOpts } from '@db/transaction.js';
 import { buildPage, decodeCursor } from '@lib/pagination.js';
 import type { ExpenseDoc } from '@shared/types/documents.js';
 
@@ -13,7 +14,7 @@ const expenses = (): Collection<ExpenseDoc> =>
 export const expenseRepo: ExpenseRepo = {
   findById: (id) => expenses().findOne({ _id: id }),
   insert: async (doc, tx) => {
-    await expenses().insertOne(doc, tx ? { session: tx.session } : {});
+    await expenses().insertOne(doc, sessionOpts(tx));
   },
   list: async (query) => {
     const filter: Record<string, unknown> = { branchId: query.branchId };

@@ -2,12 +2,12 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
-import type { Tx } from '@db/transaction.js';
+import { sessionOpts } from '@db/transaction.js';
 import type { BranchDoc, PumpDoc, TankDoc } from '@shared/types/documents.js';
 
 import type { BranchRepo, PumpRepo, TankRepo } from './branches.repo.js';
 
-const sess = (tx?: Tx) => (tx ? { session: tx.session } : {});
+const sess = sessionOpts;
 const branches = (): Collection<BranchDoc> => getDb().collection<BranchDoc>(COLLECTION.branches);
 const tanks = (): Collection<TankDoc> => getDb().collection<TankDoc>(COLLECTION.tanks);
 const pumps = (): Collection<PumpDoc> => getDb().collection<PumpDoc>(COLLECTION.pumps);

@@ -2,6 +2,7 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
+import { sessionOpts } from '@db/transaction.js';
 import { buildPage, decodeCursor } from '@lib/pagination.js';
 import type { NotificationDoc } from '@shared/types/documents.js';
 
@@ -12,7 +13,7 @@ const notifications = (): Collection<NotificationDoc> =>
 
 export const notificationRepo: NotificationRepo = {
   insert: async (doc, tx) => {
-    await notifications().insertOne(doc, tx ? { session: tx.session } : {});
+    await notifications().insertOne(doc, sessionOpts(tx));
   },
   listForUser: async (query) => {
     const filter: Record<string, unknown> = { userId: query.userId };

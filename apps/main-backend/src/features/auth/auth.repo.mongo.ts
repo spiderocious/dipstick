@@ -2,7 +2,7 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
-import type { Tx } from '@db/transaction.js';
+import { sessionOpts } from '@db/transaction.js';
 import type {
   MembershipDoc,
   OrgDoc,
@@ -23,7 +23,7 @@ import type {
 
 // Mongo implementations. ObjectId is never used — `_id` is our string ULID. The `session`
 // option from a Tx is threaded into writes that participate in a transaction.
-const sess = (tx?: Tx) => (tx ? { session: tx.session } : {});
+const sess = sessionOpts;
 
 const users = (): Collection<UserDoc> => getDb().collection<UserDoc>(COLLECTION.users);
 const orgs = (): Collection<OrgDoc> => getDb().collection<OrgDoc>(COLLECTION.orgs);

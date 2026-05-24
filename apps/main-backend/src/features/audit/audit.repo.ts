@@ -2,7 +2,7 @@ import type { Collection } from 'mongodb';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
-import type { Tx } from '@db/transaction.js';
+import { sessionOpts, type Tx } from '@db/transaction.js';
 import type { AuditDoc } from '@shared/types/documents.js';
 import type { Page, PageParams } from '@lib/pagination.js';
 import { buildPage, decodeCursor } from '@lib/pagination.js';
@@ -23,7 +23,7 @@ const coll = (): Collection<AuditDoc> => getDb().collection<AuditDoc>(COLLECTION
 
 export const auditRepo: AuditRepo = {
   insert: async (doc, tx) => {
-    await coll().insertOne(doc, tx ? { session: tx.session } : {});
+    await coll().insertOne(doc, sessionOpts(tx));
   },
   list: async (query) => {
     const filter: Record<string, unknown> = { orgId: query.orgId };

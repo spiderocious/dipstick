@@ -4,6 +4,7 @@ import type { Product } from '@dipstick/core';
 
 import { getDb } from '@db/client.js';
 import { COLLECTION } from '@db/collections.js';
+import { sessionOpts } from '@db/transaction.js';
 import type { PriceDoc } from '@shared/types/documents.js';
 
 import type { PriceRepo } from './pricing.repo.js';
@@ -12,7 +13,7 @@ const prices = (): Collection<PriceDoc> => getDb().collection<PriceDoc>(COLLECTI
 
 export const priceRepo: PriceRepo = {
   insert: async (doc, tx) => {
-    await prices().insertOne(doc, tx ? { session: tx.session } : {});
+    await prices().insertOne(doc, sessionOpts(tx));
   },
   effectiveAt: (branchId, product, at) =>
     prices()

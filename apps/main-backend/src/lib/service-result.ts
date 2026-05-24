@@ -13,6 +13,9 @@ export type ServiceResult<T> =
       messageKey: MessageKey;
       field?: string;
       httpStatus?: number;
+      // Seconds the client should wait before retrying — surfaced as the Retry-After header
+      // on rate-limit (1008) responses that flow through the ServiceResult path.
+      retryAfter?: number;
     };
 
 export const ok = <T>(data: T): ServiceResult<T> => ({ success: true, data });
@@ -20,11 +23,12 @@ export const ok = <T>(data: T): ServiceResult<T> => ({ success: true, data });
 export const fail = (
   errorCode: ErrorCode,
   messageKey: MessageKey,
-  opts: { field?: string; httpStatus?: number } = {},
+  opts: { field?: string; httpStatus?: number; retryAfter?: number } = {},
 ): ServiceResult<never> => ({
   success: false,
   errorCode,
   messageKey,
   ...(opts.field !== undefined ? { field: opts.field } : {}),
   ...(opts.httpStatus !== undefined ? { httpStatus: opts.httpStatus } : {}),
+  ...(opts.retryAfter !== undefined ? { retryAfter: opts.retryAfter } : {}),
 });
