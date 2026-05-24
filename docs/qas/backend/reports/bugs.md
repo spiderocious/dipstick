@@ -14,16 +14,28 @@
 | ID | Severity | Title | Status |
 |----|----------|-------|--------|
 | BUG-01 | P0 | Standalone-Mongo transaction fallback 500s every write | ✅ Fixed & verified |
-| BUG-02 | P1 | Manager cannot `PATCH /staff/:membershipId` (org-scope on unparametrized route) | Open |
-| BUG-03 | P3 | `variance_flag_kobo` accepts a non-integer (no `.int()`) | Open |
-| BUG-04 | P2 | `Retry-After` header missing on `1008` returned via `ServiceResult` (OTP) | Open |
+| BUG-02 | P1 | Manager cannot `PATCH /staff/:membershipId` (org-scope on unparametrized route) | ✅ Fixed & verified |
+| BUG-03 | P3 | `variance_flag_kobo` accepts a non-integer (no `.int()`) | ✅ Fixed & verified |
+| BUG-04 | P2 | `Retry-After` header missing on `1008` returned via `ServiceResult` (OTP) | ✅ Fixed & verified |
 
 | Severity | Open | Fixed |
 |----------|------|-------|
 | P0 | 0 | 1 |
-| P1 | 1 | 0 |
-| P2 | 1 | 0 |
-| P3 | 1 | 0 |
+| P1 | 0 | 1 |
+| P2 | 0 | 1 |
+| P3 | 0 | 1 |
+
+> **All four bugs fixed & verified (2026-05-24).** BUG-02/03/04 resolutions verified live on a
+> standalone Mongo (7/7 assertions): Manager edits same-branch staff → 200, cross-tenant → 404,
+> Owner unaffected; float `variance_flag_kobo` → 1001 (field `settings.variance_flag_kobo`),
+> integer → 200; OTP lockout → 1008 **with `Retry-After: 600`**. typecheck · lint · build green.
+>
+> **QA independent re-verification (2026-05-24).** I re-ran the full automated suite against the
+> fixed build — updating the 3 fix assertions to expect the corrected behavior and adding
+> `div08.test.mjs` — and reproduced the `Retry-After: 600` header at the raw level (`curl -i`).
+> **277 PASS / 0 FAIL / 1 SKIP, no regressions** (the SKIP is the not-yet-wired notifications
+> feed). All four resolutions + DIV-08 enforcement (toggle off → manager 403 / owner 201;
+> toggle on → manager 201) independently confirmed. Verdict: **cleared for functional sign-off.**
 
 With BUG-01 fixed, the full ~297-case plan was executed. 267 passed; 3 failed (BUG-02/03/04 below); 1 skipped (notifications feed — no producers wired, expected per handoff §13). All FAILs were reproduced and traced to source.
 
@@ -150,7 +162,7 @@ Server logged the degrade exactly once: `mongo transactions unsupported (standal
 
 ## BUG-02 — Manager cannot `PATCH /staff/:membershipId`; org-scope resolution blocks branch-scoped roles 🔴 P1
 
-**Status:** Open
+**Status:** ✅ FIXED & VERIFIED (2026-05-24) — see "Resolution" at the end of this entry.
 **Found by:** Dynamic test S-ST-12, confirmed with curl + source review.
 **HTTP:** `403` `{ "errorCode": 1003, "errorMessage": "You are not a member of this branch", "type": "forbidden_error" }`
 **Files:**
@@ -202,11 +214,27 @@ Make the membership endpoint branch-aware so scope resolves against the staff me
 
 After the fix, S-ST-12 must return `200` for a Manager editing a same-branch staffer, and still `1003` cross-branch / cross-tenant.
 
+### Resolution (2026-05-24) — Option B
+
+`authorize.middleware.ts` gained a `requirePermissionForBranch(resolver, ...perms)` variant. The
+resolver computes the *target* branch for routes that carry no `:branchId`. `loadScope` now
+takes an optional resolver; scoping precedence is **resolver branchId → `:branchId` param →
+org-wide ('*')**. `staff/index.ts` mounts the membership PATCH with a resolver that looks up the
+target membership's `branchId` (an org-wide `*` target falls back to org-wide scope; a missing
+membership resolves to the caller's `*` and the service's orgId re-check yields 404 for a
+stranger). The URL contract `PATCH /api/v1/staff/:membershipId` is unchanged.
+
+**Files:** `apps/main-backend/src/middlewares/authorize.middleware.ts` (new `requirePermissionForBranch`, `BranchResolver`, resolver-aware `loadScope`); `apps/main-backend/src/features/staff/index.ts` (resolver wired).
+
+**Verified live** (standalone Mongo): Manager (branch-scoped, holds `staff.manage`) edits a
+same-branch staffer → **200**; cross-tenant Owner-2 editing an Org-1 staffer → **404**; Owner
+editing staff → **200** (no regression).
+
 ---
 
 ## BUG-03 — `variance_flag_kobo` accepts a non-integer kobo value 🟡 P3
 
-**Status:** Open
+**Status:** ✅ FIXED & VERIFIED (2026-05-24) — see "Resolution" at the end of this entry.
 **Found by:** Dynamic test X-MON-05 (DIV-06 probe) + source review.
 **File:** `apps/main-backend/src/features/branches/branches.schema.ts:29`
 
@@ -238,11 +266,18 @@ Low. `variance_flag_kobo` is a per-branch threshold used to flag large variances
 variance_flag_kobo: z.number().int('Variance flag must be in whole kobo').nonnegative('Variance flag cannot be negative').optional(),
 ```
 
+### Resolution (2026-05-24)
+
+Applied exactly as suggested — added `.int('Variance flag must be in whole kobo')` to the field in
+`apps/main-backend/src/features/branches/branches.schema.ts`. **Verified live:** `PATCH /branches/:id`
+with `{ settings: { variance_flag_kobo: 123.45 } }` → **400 `1001`**, field `settings.variance_flag_kobo`;
+integer `500000` → **200**.
+
 ---
 
 ## BUG-04 — `Retry-After` header missing on `1008` rate-limit responses (OTP) 🟡 P2
 
-**Status:** Open
+**Status:** ✅ FIXED & VERIFIED (2026-05-24) — see "Resolution" at the end of this entry.
 **Found by:** Dynamic test A-OTP-08, confirmed with `curl -i`.
 **HTTP:** `429` `{ "errorCode": 1008, "errorMessage": "Too many attempts. Request a new code", "type": "rate_limit_error", "field": "code" }` — **no `Retry-After` header**.
 **Files:**
@@ -286,6 +321,18 @@ Teach the `ServiceResult` → response path to carry `retryAfter`. Either:
 - in `ResponseUtil.error`, default a `Retry-After` whenever `code === RATE_LIMITED`.
 
 After the fix, A-OTP-08 must see a numeric `Retry-After` on the 429.
+
+### Resolution (2026-05-24)
+
+Threaded `retryAfter` through the `ServiceResult` path (the first option): `fail(...)` and
+`ServiceResult` carry an optional `retryAfter`; `sendResult` forwards it; `ResponseUtil.error`
+sets the `Retry-After` header when present. The OTP service now returns
+`fail(RATE_LIMITED, 'otp_too_many', { field: 'code', retryAfter })`, where `retryAfter` is the
+seconds until the current OTP expires (≥1) — i.e. when a fresh code can be requested.
+
+**Files:** `lib/service-result.ts` (optional `retryAfter`), `lib/response.ts` (`ResponseUtil.error` sets header), `lib/http/respond.ts` (forwards it), `features/auth/auth.service.ts` (OTP lockout supplies it).
+
+**Verified live:** 6th OTP attempt → **429 `1008`** with **`Retry-After: 600`**.
 
 ---
 

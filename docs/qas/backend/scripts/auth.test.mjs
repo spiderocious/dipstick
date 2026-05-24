@@ -115,9 +115,11 @@ async function run() {
     for (let i = 0; i < 5; i++) last = await post('/auth/verify-otp', { phone, code: '111111' });
     const sixth = await post('/auth/verify-otp', { phone, code: '111111' });
     const ok = sixth.status === 429 && sixth.data?.errorCode === 1008;
-    check('A-OTP-08', '[SM] 6th attempt → 1008 + Retry-After',
-      ok && sixth.headers.get('retry-after') !== null,
-      `6th status=${sixth.status} body=${JSON.stringify(sixth.data)} retry-after=${sixth.headers.get('retry-after')}`);
+    const ra = sixth.headers.get('retry-after');
+    // [BUG-04 FIX VERIFY] Retry-After must now be present (seconds-to-expiry, ~600).
+    check('A-OTP-08', '[BUG-04 fix] 6th attempt → 1008 + Retry-After header present',
+      ok && ra !== null && Number(ra) > 0,
+      `6th status=${sixth.status} body=${JSON.stringify(sixth.data)} retry-after=${ra}`);
   }
   expectError('A-OTP-09', 'resend unknown phone → 1004 field=phone',
     await post('/auth/resend-otp', { phone: '+2349888888888' }), 1004, { field: 'phone' });

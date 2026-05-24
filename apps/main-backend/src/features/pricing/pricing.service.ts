@@ -49,10 +49,16 @@ export class PricingService {
     branchId: string,
     input: { product: Product; pricePerLitreKobo: number; effectiveAt: string; reason: string },
     actorId: string,
+    isOrgWide: boolean,
   ): Promise<ServiceResult<PriceDoc>> {
     const branch = await this.branches.findById(branchId);
     if (!branch || branch.orgId !== orgId) return fail(ERROR_CODE.NOT_FOUND, 'branch_not_found');
     if (branch.isArchived) return fail(ERROR_CODE.INVALID_STATE, 'branch_archived');
+    // Per-branch gate (DIV-08): when the branch does not permit managers to set price, only an
+    // owner (org-wide membership) may — even if a branch-scoped role carries CAN_SET_PRICE.
+    if (!isOrgWide && !branch.settings.managerMaySetPrice) {
+      return fail(ERROR_CODE.FORBIDDEN, 'price_manager_not_permitted');
+    }
 
     const previous = await this.prices.current(branchId, input.product);
     const doc: PriceDoc = {

@@ -44,6 +44,7 @@ const loadScope = async (req: Request, resolver?: BranchResolver): Promise<void>
   if (branchId) a.branchId = branchId;
   a.permissions = permissions;
   a.membershipId = membership._id;
+  a.isOrgWide = membership.branchId === '*';
   a.defaultPumpId = membership.defaultPumpId;
   requestContext.set('role', role?.name ?? 'unknown');
 };

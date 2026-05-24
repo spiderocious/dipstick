@@ -313,7 +313,7 @@ Current price per product.
 ### POST `/branches/:branchId/prices` — `price.set`
 `{ "product":"PMS","price_per_litre_kobo":91000,"effective_at":"2026-05-24T06:00:00.000Z","reason":"depot increase" }`
 `201` → price. **Pinning:** a shift opened before `effective_at` keeps the old price to close; shifts opened at/after use the new one.
-Errors: `1001` (reason/price) · `1004`/`1006` branch.
+Errors: `1001` (reason/price) · `1004`/`1006` branch · **`1003`** when the branch's `manager_may_set_price` is `false` and the caller is a branch-scoped member — only the owner (org-wide membership) may set price then; an owner is always allowed.
 
 ### GET `/branches/:branchId/prices/:product/history` — `price.history.view`
 Every change, newest first (from→to via `previous_price_per_litre_kobo`, who, when, why).

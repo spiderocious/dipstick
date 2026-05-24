@@ -12,6 +12,10 @@ export interface AuthContext {
   branchId?: string;
   permissions?: Set<Permission>;
   membershipId?: string;
+  // True when scope resolved via the caller's org-wide ('*') membership — i.e. an owner with
+  // authority over every branch. Branch-scoped members (managers/attendants) are false. Used
+  // where a per-branch setting may further restrict non-owners (e.g. manager_may_set_price).
+  isOrgWide?: boolean;
   // The attendant's own pump default — used by shift.close.own checks.
   defaultPumpId?: string | null;
 }

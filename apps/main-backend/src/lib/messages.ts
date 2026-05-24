@@ -56,6 +56,7 @@ export const MESSAGES = {
   // Pricing
   price_not_found: 'Price not found',
   price_reason_required: 'A reason is required to change the price',
+  price_manager_not_permitted: 'This branch does not permit managers to set the price',
 
   // Deliveries
   delivery_not_found: 'Delivery not found',

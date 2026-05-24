@@ -26,7 +26,11 @@ export type CreateBranchBody = z.infer<typeof CreateBranchBody>;
 
 const settingsInput = z.object({
   require_closing_dip: z.boolean().optional(),
-  variance_flag_kobo: z.number().nonnegative('Variance flag cannot be negative').optional(),
+  variance_flag_kobo: z
+    .number()
+    .int('Variance flag must be in whole kobo')
+    .nonnegative('Variance flag cannot be negative')
+    .optional(),
   manager_may_set_price: z.boolean().optional(),
   delivery_tolerance_litres: z.number().nonnegative('Tolerance cannot be negative').optional(),
 });

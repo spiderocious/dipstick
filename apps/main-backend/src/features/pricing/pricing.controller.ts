@@ -41,6 +41,7 @@ export const pricingController = {
         reason: body.reason,
       },
       auth.userId,
+      auth.isOrgWide ?? false,
     );
     return sendResult(res, result, (r, data) => ResponseUtil.created(r, serializePrice(data)));
   },

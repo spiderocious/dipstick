@@ -15,5 +15,6 @@ export const sendResult = <T>(
   return ResponseUtil.error(res, result.errorCode, messages.get(result.messageKey), {
     ...(result.field !== undefined ? { field: result.field } : {}),
     ...(result.httpStatus !== undefined ? { status: result.httpStatus } : {}),
+    ...(result.retryAfter !== undefined ? { retryAfter: result.retryAfter } : {}),
   });
 };

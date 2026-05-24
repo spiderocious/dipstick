@@ -24,4 +24,13 @@ export {
   History as IconAudit, // audit log
   Building2 as IconBranch, // branches
   Bell as IconBell, // notifications
+  Plus as IconPlus, // create / add
+  Calendar as IconCalendar, // dates / roster
+  Printer as IconPrint, // export / print
+  Pencil as IconEdit, // edit a row
+  ShieldCheck as IconRole, // roles & permissions
+  ChevronUp as IconChevronUp,
 } from 'lucide-react';
+
+// The shared icon type, so feature code can type an icon prop without importing lucide-react.
+export type { LucideIcon } from 'lucide-react';

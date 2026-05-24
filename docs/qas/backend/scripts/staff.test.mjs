@@ -50,17 +50,23 @@ async function run() {
       r.status === 200 && it && 'role_name' in it && 'shift_count_30d' in it && 'variance_kobo_30d' in it,
       `status=${r.status} item=${JSON.stringify(it).slice(0, 200)}`);
   }
-  // S-ST-12 [BUG] Manager (branch-scoped membership) cannot PATCH /staff/:membershipId.
-  // The route is mounted at /api/v1/staff with NO :branchId, so loadScope resolves ONLY the
-  // caller's org-wide ('*') membership. A Manager has a branch-scoped membership, never '*',
-  // so they hit not_a_member (1003) BEFORE the permission check — despite holding staff.manage.
-  // Expected (per handoff matrix "Manage staff — Manager ✅" + the route's own comment): 200.
-  // Confirmed actual: 1003. Filed as BUG-02 (P1). This case asserts the INTENDED behavior, so
-  // it stays RED until the scope resolution is fixed.
+  // S-ST-12 [BUG-02 FIX VERIFY] Manager edits same-branch staff → 200 (scope now resolves
+  // against the TARGET membership's branch via requirePermissionForBranch).
   {
     const r = await patch(`/staff/${state.attendant.membershipId}`, { default_pump_id: state.pumps.P1.id }, state.manager.token);
-    check('S-ST-12', '[BUG-02 P1] manager PATCH /staff/:id → expected 200, got ' + r.status,
-      r.status === 200, `BUG: manager w/ staff.manage blocked by org-scope resolution → ${r.status} ${JSON.stringify(r.data)}`);
+    check('S-ST-12', '[BUG-02 fix] manager PATCH same-branch staff → 200',
+      r.status === 200, `expected 200, got ${r.status} ${JSON.stringify(r.data)}`);
+  }
+  // S-ST-12b [BUG-02 FIX] cross-tenant: owner2 (org-2) cannot PATCH an org-1 membership → 404 (no leak)
+  {
+    const r = await patch(`/staff/${state.attendant.membershipId}`, { is_active: true }, state.owner2.token);
+    check('S-ST-12b', '[BUG-02 fix] cross-tenant PATCH staff → 404 (no leak)',
+      r.status === 404, `expected 404, got ${r.status} ${JSON.stringify(r.data)}`);
+  }
+  // S-ST-12c [BUG-02 FIX] owner (org-wide) still works → 200
+  {
+    const r = await patch(`/staff/${state.attendant.membershipId}`, { is_active: true }, T);
+    check('S-ST-12c', '[BUG-02 fix] owner PATCH staff → 200 (unaffected)', r.status === 200, `expected 200, got ${r.status}`);
   }
 
   section('§6.2 Roster & leaderboard');

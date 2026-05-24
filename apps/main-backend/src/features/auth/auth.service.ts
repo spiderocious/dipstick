@@ -189,7 +189,10 @@ export class AuthService {
       return fail(ERROR_CODE.INVALID_STATE, 'otp_expired', { field: 'code' });
     }
     if (otp.attempts >= env.OTP_MAX_ATTEMPTS) {
-      return fail(ERROR_CODE.RATE_LIMITED, 'otp_too_many', { field: 'code' });
+      // Locked out until this OTP expires (then a fresh code must be requested). Tell the
+      // client how long to wait via Retry-After — at least 1s.
+      const retryAfter = Math.max(1, Math.ceil((otp.expiresAt.getTime() - Date.now()) / 1000));
+      return fail(ERROR_CODE.RATE_LIMITED, 'otp_too_many', { field: 'code', retryAfter });
     }
     const matches = await verifyPassword(code, otp.codeHash);
     if (!matches) {

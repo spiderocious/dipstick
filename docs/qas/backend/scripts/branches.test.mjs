@@ -83,16 +83,15 @@ async function run() {
     made?.settings?.require_closing_dip === true && made?.settings?.variance_flag_kobo === 500000 &&
     made?.settings?.manager_may_set_price === false && made?.settings?.delivery_tolerance_litres === 200,
     `settings=${JSON.stringify(made?.settings)}`);
-  // DIV-06 probe: variance_flag_kobo float (schema is .nonnegative() only, no .int())
+  // X-MON-05 [BUG-03 FIX VERIFY]: variance_flag_kobo now has .int() → float rejected, integer ok.
   {
-    const r = await patch(`/branches/${A}`, { settings: { variance_flag_kobo: 123.45 } }, T);
-    if (r.status === 200 && r.data?.data?.settings?.variance_flag_kobo === 123.45) {
-      check('X-MON-05', '[BUG] variance_flag_kobo accepts a FLOAT (no .int())', false,
-        `accepted 123.45 → ${r.data.data.settings.variance_flag_kobo} (contradicts "_kobo integer")`);
-    } else {
-      check('X-MON-05', 'variance_flag_kobo rejects/handles float', r.status === 400,
-        `status=${r.status} value=${r.data?.data?.settings?.variance_flag_kobo}`);
-    }
+    const float = await patch(`/branches/${A}`, { settings: { variance_flag_kobo: 123.45 } }, T);
+    check('X-MON-05', '[BUG-03 fix] variance_flag_kobo float → 1001 field settings.variance_flag_kobo',
+      float.status === 400 && float.data?.errorCode === 1001 && /variance_flag_kobo/.test(float.data?.field ?? ''),
+      `status=${float.status} ${JSON.stringify(float.data)}`);
+    const intOk = await patch(`/branches/${A}`, { settings: { variance_flag_kobo: 600000 } }, T);
+    check('X-MON-05b', '[BUG-03 fix] integer variance_flag_kobo → 200', intOk.status === 200 && intOk.data?.data?.settings?.variance_flag_kobo === 600000,
+      `status=${intOk.status} value=${intOk.data?.data?.settings?.variance_flag_kobo}`);
     await patch(`/branches/${A}`, { settings: { variance_flag_kobo: 500000 } }, T);
   }
 
