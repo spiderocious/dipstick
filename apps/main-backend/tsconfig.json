@@ -11,6 +11,7 @@
     "paths": {
       "@features/*": ["features/*"],
       "@lib/*": ["lib/*"],
+      "@db/*": ["db/*"],
       "@middlewares/*": ["middlewares/*"],
       "@shared/*": ["shared/*"]
     }

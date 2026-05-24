@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 
-import type { ApiError, ApiEnvelope } from '@shared/types/envelope.types.js';
+import { ERROR_CODE_META, type ErrorCode } from '@shared/constants/error-codes.js';
+import type { ApiEnvelope, ApiErrorBody } from '@shared/types/envelope.types.js';
 
 export class ResponseUtil {
   static ok<T>(res: Response, data: T, meta?: Record<string, unknown>): Response {
@@ -20,7 +21,20 @@ export class ResponseUtil {
     return res.status(204).end();
   }
 
-  static error(res: Response, status: number, err: ApiError): Response {
-    return res.status(status).json({ error: err } satisfies ApiEnvelope<never>);
+  // Flat error shape. `status` defaults from the code's metadata but may be overridden.
+  static error(
+    res: Response,
+    code: ErrorCode,
+    message: string,
+    opts: { status?: number; field?: string } = {},
+  ): Response {
+    const meta = ERROR_CODE_META[code];
+    const body: ApiErrorBody = {
+      errorCode: code,
+      errorMessage: message,
+      type: meta.type,
+      ...(opts.field !== undefined ? { field: opts.field } : {}),
+    };
+    return res.status(opts.status ?? meta.httpStatus).json(body);
   }
 }

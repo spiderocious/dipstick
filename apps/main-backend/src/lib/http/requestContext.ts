@@ -8,6 +8,7 @@ export interface RequestCtx {
   userAgent: string | undefined;
   startedAt: number;
   userId?: string;
+  orgId?: string;
   role?: string;
 }
 

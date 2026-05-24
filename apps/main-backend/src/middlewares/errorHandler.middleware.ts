@@ -5,16 +5,15 @@ import { AppError } from '@lib/errors.js';
 import { requestContext } from '@lib/http/requestContext.js';
 import { logger } from '@lib/logger.js';
 import { ResponseUtil } from '@lib/response.js';
-import { HTTP_STATUS } from '@shared/constants/http-status.js';
+import { ERROR_CODE } from '@shared/constants/error-codes.js';
 
-const formatZodFieldErrors = (err: ZodError): Record<string, string[]> => {
-  const out: Record<string, string[]> = {};
-  for (const issue of err.issues) {
-    const key = issue.path.join('.') || '_root';
-    const arr = (out[key] ??= []);
-    arr.push(issue.message);
-  }
-  return out;
+// Reduce a raw ZodError to a single field + message (mirrors lib/validate.ts so that a
+// route that called Schema.parse() directly still yields one-error-at-a-time output).
+const firstZodIssue = (err: ZodError): { field: string; message: string } => {
+  const issue = err.issues[0];
+  if (!issue) return { field: '_root', message: 'Validation failed' };
+  const field = issue.path.length === 0 ? '_root' : issue.path.map(String).join('.');
+  return { field, message: issue.message };
 };
 
 export const errorHandler = (
@@ -26,32 +25,22 @@ export const errorHandler = (
   const requestId = requestContext.getRequestId();
 
   if (err instanceof AppError) {
-    if (err.status >= 500) {
-      logger.error({ err, requestId }, err.message);
-    }
-    if (err.retryAfter !== undefined) {
-      res.setHeader('Retry-After', err.retryAfter);
-    }
-    ResponseUtil.error(res, err.status, {
-      code: err.code,
-      message: err.message,
-      ...(err.fieldErrors !== undefined ? { field_errors: err.fieldErrors } : {}),
+    if (err.status >= 500) logger.error({ err, requestId }, err.message);
+    if (err.retryAfter !== undefined) res.setHeader('Retry-After', err.retryAfter);
+    ResponseUtil.error(res, err.code, err.message, {
+      status: err.status,
+      ...(err.field !== undefined ? { field: err.field } : {}),
     });
     return;
   }
 
   if (err instanceof ZodError) {
-    ResponseUtil.error(res, HTTP_STATUS.BAD_REQUEST, {
-      code: 'validation_error',
-      message: 'Validation failed',
-      field_errors: formatZodFieldErrors(err),
-    });
+    const { field, message } = firstZodIssue(err);
+    ResponseUtil.error(res, ERROR_CODE.VALIDATION, message, { field });
     return;
   }
 
+  // Extreme / irreconcilable — never leak internals. 1009.
   logger.error({ err, requestId }, 'Unhandled error');
-  ResponseUtil.error(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, {
-    code: 'internal',
-    message: 'An unexpected error occurred',
-  });
+  ResponseUtil.error(res, ERROR_CODE.INTERNAL, 'An unexpected error occurred');
 };

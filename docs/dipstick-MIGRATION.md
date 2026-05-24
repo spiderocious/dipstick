@@ -70,7 +70,38 @@ The HTML spec is the canonical visual reference and is **not** edited by this wo
 | `AppToast` · `AppBanner` · `AppInlineAlert` | 41-feedback.html | toast tones ok/error/delivered; banner ok/watch/short/info/ink; inline short/over/info |
 
 ### Imperative service (`apps/web/src/shared/drawer/`)
-Per translation-ui-guide §6.3: `drawer-store.ts` (framework-free pub-sub), `drawer-service.ts` (`DrawerService.toast/confirm/voidConfirm`), `modal-host.tsx` + `toast-host.tsx` (useSyncExternalStore + portal), mounted in `app.provider.tsx`. Lives in the **app**, not the library (your call), so the shared lib stays free of app-level imperative state.
+Per translation-ui-guide §6.3: `drawer-store.ts` (framework-free pub-sub), `drawer-service.ts`, `modal-host.tsx` + `toast-host.tsx` (useSyncExternalStore + portal), mounted in `app.provider.tsx`. Lives in the **app**, not the library (your call), so the shared lib stays free of app-level imperative state.
+
+The `DrawerService` API:
+
+| Method | Purpose |
+|---|---|
+| `toast(message, opts?)` | Momentary ink toast. `opts`: `tone` (ok/error/delivered), `mark`, `durationMs`, `onUndo`, `undoLabel`. Returns the toast id. |
+| `dismissToast(id)` | Dismiss a toast early. |
+| `confirm(title, body, opts?)` | Standard confirm modal. `opts`: `eyebrow`, `confirmLabel`, `cancelLabel`, `onConfirm`. |
+| `voidConfirm(title, body, opts)` | The critical typed-VOID modal. `opts`: `confirmWord` (default `VOID`), `confirmLabel`, `onConfirm(reason)`. |
+| **`launch(content, opts?)`** | **Fully custom modal** — the body is entirely yours. |
+| `closeModal()` | Close the active modal. |
+
+**`launch(content, options)`** — `content` is a `ReactNode` or a render fn `(close) => ReactNode` (so the body can dismiss itself). `options`:
+
+```ts
+{
+  eyebrow?: string;
+  title?: ReactNode;
+  subtitle?: ReactNode;           // serif italic, under the title
+  maxWidth?: number;              // default 520
+  showCloseButton?: boolean;      // header ×. default true
+  clickOutsideToClose?: boolean;  // scrim-click + Escape. default true
+  cancelButtonProps?:  { show?: boolean; text?: string; onClick?: (close) => void };
+  confirmButtonProps?: { show?: boolean; text?: string; onClick?: (close) => void };
+  onClose?: () => void;           // fires on ×/scrim/Escape
+}
+```
+
+Footer renders only when a button has `show: true`. Each button's `onClick` receives `close` so you control dismissal (e.g. keep the modal open on validation failure); omit `onClick` and the button closes by default. Built on the `AppModal` primitive, which gained `subtitle` and `showCloseButton` props (the × and outside-close are now independently controllable). Store gained a `kind: 'launch'` state; `ModalHost` renders it. Demo: two samples in the DrawerService preview (full-options + a locked, no-dismiss modal).
+
+> Note: the client components (`AppModal`, `AppRadio`, `AppField`) carry a `'use client'` directive for SSR/Next safety.
 
 ---
 
