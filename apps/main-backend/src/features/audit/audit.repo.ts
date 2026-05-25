@@ -12,6 +12,8 @@ export interface AuditQuery extends PageParams {
   branchId?: string;
   entityType?: string;
   entityId?: string;
+  // Filter to actions performed BY a given user (the "activity" view on staff detail).
+  actorId?: string;
 }
 
 export interface AuditRepo {
@@ -30,6 +32,7 @@ export const auditRepo: AuditRepo = {
     if (query.branchId) filter['branchId'] = query.branchId;
     if (query.entityType) filter['entityType'] = query.entityType;
     if (query.entityId) filter['entityId'] = query.entityId;
+    if (query.actorId) filter['actorId'] = query.actorId;
 
     // Cursor is the `at` ISO timestamp; we page backwards in time (newest first).
     const cursor = decodeCursor(query.cursor);

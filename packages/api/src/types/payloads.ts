@@ -89,6 +89,18 @@ export interface UpdateStaffPayload {
   is_active?: boolean;
 }
 
+// Assign an existing person to another branch (role from that branch).
+export interface AssignBranchPayload {
+  role_id: string;
+}
+
+// Edit the staff member's account (the user record).
+export interface EditAccountPayload {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+}
+
 export interface RosterPayload {
   week_start: string;
   assignments: Record<string, string[]>;

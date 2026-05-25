@@ -5,7 +5,7 @@ import { apiClient } from '../client.js';
 import { EP } from '../endpoints.js';
 import type { ApiResponse } from '../types/envelope.js';
 import type { AddNotePayload } from '../types/payloads.js';
-import type { AuditEntryWire, NoteWire, PageMeta } from '../types/wire.js';
+import type { AuditEntryWire, NoteWire, PageMeta, RefMap } from '../types/wire.js';
 
 export function useNotes(entityType: string, entityId: string) {
   return useQuery({
@@ -41,7 +41,8 @@ export function useAudit(branchId: string) {
       const res = await apiClient
         .get(EP.AUDIT(branchId))
         .json<ApiResponse<{ items: AuditEntryWire[] }> & { meta?: PageMeta }>();
-      return res.data.items;
+      // Return items + the id→label map so the UI can render labels for raw ids.
+      return { items: res.data.items, refs: (res.refs ?? {}) as RefMap };
     },
   });
 }

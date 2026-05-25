@@ -22,6 +22,20 @@ export const UpdateStaffBody = z.object({
 });
 export type UpdateStaffBody = z.infer<typeof UpdateStaffBody>;
 
+// Assign an existing staff member to another branch with a role from THAT branch.
+export const AssignBranchBody = z.object({
+  role_id: z.string({ required_error: 'Role is required' }).min(1, 'Choose a role'),
+});
+export type AssignBranchBody = z.infer<typeof AssignBranchBody>;
+
+// Edit the staff member's account (the user record, not a branch membership).
+export const EditAccountBody = z.object({
+  name: z.string().min(2, 'Enter the staff member’s name').optional(),
+  email: z.string().email('Enter a valid email address').optional(),
+  phone: z.string().min(10, 'Enter a valid phone number').nullable().optional(),
+});
+export type EditAccountBody = z.infer<typeof EditAccountBody>;
+
 // Roster: per-attendant array of 7 windows (Mon..Sun).
 export const SetRosterBody = z.object({
   week_start: z.string({ required_error: 'Week start is required' }).min(10, 'Enter the week start date'),

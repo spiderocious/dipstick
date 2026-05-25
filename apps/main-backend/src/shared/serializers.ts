@@ -15,9 +15,20 @@ import type {
   UserDoc,
 } from '@shared/types/documents.js';
 
+import type { RefMap } from '@features/refs/refs.service.js';
+
 // Map persisted documents to the wire (seam) shape. `_id` becomes `id`; internal-only
 // fields (passwordHash) are dropped. This is the only place the doc→response mapping lives,
 // so the seam contract is auditable in one file.
+
+// A resolved-ref map → wire shape (snake_case href_kind). Keys are the ids.
+export const serializeRefs = (refs: RefMap): Record<string, { type: string; label: string; href_kind: string | null }> => {
+  const out: Record<string, { type: string; label: string; href_kind: string | null }> = {};
+  for (const [id, ref] of Object.entries(refs)) {
+    out[id] = { type: ref.type, label: ref.label, href_kind: ref.hrefKind };
+  }
+  return out;
+};
 
 export const serializeUser = (u: UserDoc) => ({
   id: u._id,

@@ -4,6 +4,7 @@ import {
   usePostShift,
   useShift,
   useVoidShift,
+  type RefMap,
   type ShiftWire,
 } from '@dipstick/api';
 import { AppButton, AppFigure, AppInput, AppPill, AppSheet, FieldRow, SheetHead, type AppPillTone } from '@dipstick/ui';
@@ -41,8 +42,17 @@ export function ShiftDetailScreen() {
   );
 }
 
-function ShiftDetail({ shift, branchId }: { readonly shift: ShiftWire; readonly branchId: string }) {
+function ShiftDetail({
+  shift,
+  branchId,
+}: {
+  readonly shift: ShiftWire & { refs: RefMap };
+  readonly branchId: string;
+}) {
   const { can } = useAuth();
+  // Resolve attendant + pump ids to names for the header (fall back to the raw id).
+  const attendantName = shift.refs[shift.attendant_id]?.label ?? shift.attendant_id;
+  const pumpName = shift.refs[shift.pump_id]?.label ?? shift.pump_id;
   const date = shift.business_date || todayBusinessDate();
   const post = usePostShift(shift.id, branchId, date);
   const voidShift = useVoidShift(shift.id, branchId, date);
@@ -71,8 +81,8 @@ function ShiftDetail({ shift, branchId }: { readonly shift: ShiftWire; readonly 
   return (
     <>
       <PageHead
-        overline={`${SHIFT_COPY.overline} · ${shift.pump_id}`}
-        title={shift.attendant_id}
+        overline={`${SHIFT_COPY.overline} · ${pumpName}`}
+        title={attendantName}
         actions={
           <div className="flex items-center gap-2">
             <AppPill tone={STATUS_TONE[status] ?? 'default'} dot>

@@ -22,6 +22,17 @@
 // 204 → empty body
 ```
 
+**`refs` (id → label map).** Endpoints whose payload carries opaque ids (audit, staff activity,
+daybook, single shift) add a top-level `refs` map so the UI shows names, not raw ids:
+```jsonc
+{ "data": { … }, "refs": {
+  "usr_…": { "type": "user",  "label": "Tunde A.", "href_kind": "user" },
+  "rol_…": { "type": "role",  "label": "Manager",  "href_kind": null },
+  "pmp_…": { "type": "pump",  "label": "Pump P1",  "href_kind": null } } }
+```
+`href_kind` ∈ user | shift | delivery | branch | null — only the first four have detail pages.
+An id absent from `refs` is unresolvable (e.g. cross-tenant) → the UI shows a muted fallback.
+
 ### Error — FLAT shape (always exactly these fields; `field` only on validation)
 ```jsonc
 { "errorCode": 1001, "errorMessage": "Enter a valid email address", "type": "validation_error", "field": "email" }
@@ -214,6 +225,40 @@ Creates the user if new (pre-verified, since added by a manager) and a branch me
 30-day per-head net variance, worst shortage first.
 `{ "data": { "items": [ { "attendant_id":"usr_…","variance_kobo":-120000,"shift_count":21 } ] } }`
 
+### GET `/staff/:userId/detail` — `staff.view` (resolved against a branch the person shares with the caller)
+Per-person detail across the org: account, every branch membership, metrics, recent shifts.
+```jsonc
+{ "data": {
+  "user": { "id":"usr_…","name":"Tunde A.","email":"…","phone":"…","email_verified":true,"phone_verified":true,"is_active":true,"created_at":"…" },
+  "memberships": [ { "id":"mbr_…","branch_id":"brn_…","branch_name":"Ikeja","role_id":"rol_…","role_name":"Attendant","permissions":[…],"is_active":true, … } ],
+  "metrics": { "shift_count_total":124,"shift_count_30d":18,"variance_kobo_30d":-45000 },
+  "recent_shifts": [ /* up to 10 serialized shifts, newest first */ ]
+} }
+```
+Errors: `1004` not found / not a member of the caller's org · `1003` caller lacks `staff.view` on a shared branch.
+
+### GET `/staff/:userId/activity` — `staff.view` | `audit.view` — cursor-paginated
+The audit entries this person performed (audit filtered by `actor_id`). Returns the same
+**`refs`**-enriched shape as the audit log (see §12). `{ "data": { "items": [ … ] }, "meta": {…}, "refs": {…} }`.
+
+### POST `/branches/:branchId/staff/:userId/assign` — `staff.manage` | `role.assign`
+Assign an existing person to **another** branch (multi-branch). `{ "role_id":"rol_…" }` (role from the org).
+Creates a membership in `:branchId` (or reactivates a dormant one). `201` → membership.
+Errors: `1004` user/branch/role · `1006` `branch_archived` · `1005` `already_member` (already active there).
+
+### POST `/staff/:userId/reset-password` — `staff.manage`
+Issues a fresh temporary password. `200 { "data": { "reset": true, "temp_password": "Dipstick-…" } }`
+(`temp_password` present only outside production). Audited `staff.password_reset`.
+
+### PATCH `/staff/:userId/account` — `staff.manage`
+Edit the account (the user record, not a membership). `{ "name"?, "email"?, "phone"? }`.
+Changing email/phone clears that channel's verified flag (re-verify). `200` → serialized user.
+Errors: `1005` `account_email_taken` (field `email`) / `account_phone_taken` (field `phone`).
+
+> **Multi-branch:** a user may hold one membership per branch (`assign` adds them). The
+> `branch_id: "*"` membership is the org-wide owner grant. `/me` and `/staff/:userId/detail`
+> list all of a person's memberships.
+
 ---
 
 ## 7. The day, shifts & dips (Module 2)
@@ -224,7 +269,8 @@ Everything that happened on a day, in order.
 { "data": { "business_date":"2026-05-23",
   "shifts": [ /* serialized shifts */ ],
   "dips":   [ /* serialized dips */ ],
-  "tanks":  [ /* tank readouts: current_litres etc. */ ] } }
+  "tanks":  [ /* tank readouts: current_litres etc. */ ] },
+  "refs": { /* attendant + pump ids → labels (see §1) */ } }
 ```
 
 ### POST `/branches/:branchId/dips` — `dip.record`
@@ -244,7 +290,7 @@ Pins the price: an explicit `price_per_litre_kobo` **requires** `price_override_
 `201` → shift (status `open`). Errors: `1004` branch/pump · `1006` `branch_archived` · `1007` `price_not_found` (no price set yet).
 
 ### GET `/shifts/:shiftId` — member of the shift's branch
-`200` → full shift (meter trail + cash trail + variance). `1004` if not your org.
+`200` → full shift (meter trail + cash trail + variance) + a top-level `refs` (attendant + pump → labels). `1004` if not your org.
 ```jsonc
 { "data": {
   "id":"shf_…","branch_id":"brn_…","pump_id":"pmp_…","attendant_id":"usr_…","window":"morning","business_date":"2026-05-23",
@@ -371,10 +417,14 @@ Litres per day per branch (default 7 days, max 90).
 `{ "body":"Customer left without paying", "mentions":["usr_owner"] }` → `201` → note.
 
 ### GET `/branches/:branchId/audit?entity_type=&entity_id=&cursor=&limit=` — `audit.view` — cursor-paginated
-Timeline of every state-changing action, newest first.
+Timeline of every state-changing action, newest first. Carries a top-level **`refs`** (§1)
+resolving every `actor_id`/`entity_id` (and ids nested in `before`/`after`) to a label so the UI
+shows names, never raw ids.
 ```jsonc
 { "data": { "items": [
-  { "id":"aud_…","branch_id":"brn_…","actor_id":"usr_…","action":"shift.voided","entity_type":"shift","entity_id":"shf_…","before":{…},"after":{…},"note":"Pump meter misread","at":"…" } ] }, "meta": {…} }
+  { "id":"aud_…","branch_id":"brn_…","actor_id":"usr_…","action":"shift.voided","entity_type":"shift","entity_id":"shf_…","before":{…},"after":{…},"note":"Pump meter misread","at":"…" } ] },
+  "meta": {…},
+  "refs": { "usr_…": {"type":"user","label":"Tunde A.","href_kind":"user"}, "shf_…": {"type":"shift","label":"Shift · 2026-05-23","href_kind":"shift"} } }
 ```
 
 ---

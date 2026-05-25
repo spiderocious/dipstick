@@ -1,5 +1,5 @@
-import { P, formatNaira } from '@dipstick/core';
-import { useStaff, useVarianceLeaderboard, type StaffMemberWire } from '@dipstick/api';
+import { P, ROUTES, formatNaira } from '@dipstick/core';
+import { useStaff, useVarianceLeaderboard, type RefMap, type StaffMemberWire } from '@dipstick/api';
 import {
   AppAvatar,
   AppButton,
@@ -9,11 +9,12 @@ import {
   SheetHead,
   type AppAvatarRole,
 } from '@dipstick/ui';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { IconPlus, IconStaff } from '@icons';
 
 import { useAuth } from '@shared/auth';
+import { IdRef } from '@shared/id-ref';
 import { PageBody, PageHead, QueryState } from '@shared/screen';
 
 import { STAFF_COPY } from '../staff.copy.ts';
@@ -33,6 +34,15 @@ export function StaffScreen() {
   const { can } = useAuth();
   const query = useStaff(branchId);
   const leaderboard = useVarianceLeaderboard(branchId);
+
+  // The leaderboard endpoint returns bare attendant ids; resolve them to names using the
+  // staff list we already loaded (a local RefMap, same shape <IdRef> consumes elsewhere).
+  const staffRefs: RefMap = Object.fromEntries(
+    (query.data ?? []).map((m) => [
+      m.user_id,
+      { type: 'user' as const, label: m.user.name, href_kind: 'user' as const },
+    ]),
+  );
 
   return (
     <PageBody>
@@ -64,7 +74,7 @@ export function StaffScreen() {
           <div className="flex flex-col gap-6">
             <div className="overflow-hidden rounded-card border border-sheet-edge">
               {items.map((m) => (
-                <StaffRow key={m.id} member={m} />
+                <StaffRow key={m.id} member={m} branchId={branchId} />
               ))}
             </div>
 
@@ -74,7 +84,7 @@ export function StaffScreen() {
                 <div className="flex flex-col">
                   {(leaderboard.data ?? []).map((row) => (
                     <div key={row.attendant_id} className="flex items-baseline gap-3 border-b border-hair-soft py-2 last:border-b-0">
-                      <span className="font-serif text-[13px] text-ink">{row.attendant_id}</span>
+                      <IdRef id={row.attendant_id} refs={staffRefs} branchId={branchId} className="text-[13px]" />
                       <span className="ml-auto font-mono text-[11px] text-ink-tertiary">{row.shift_count} shifts</span>
                       <span
                         className={
@@ -97,9 +107,12 @@ export function StaffScreen() {
   );
 }
 
-function StaffRow({ member }: { readonly member: StaffMemberWire }) {
+function StaffRow({ member, branchId }: { readonly member: StaffMemberWire; readonly branchId: string }) {
   return (
-    <div className="flex items-center gap-3 border-b border-hair bg-sheet px-4 py-3.5 last:border-b-0 sm:gap-4 sm:px-5">
+    <Link
+      to={ROUTES.BRANCH_STAFF_MEMBER(branchId, member.user_id)}
+      className="flex items-center gap-3 border-b border-hair bg-sheet px-4 py-3.5 transition-colors last:border-b-0 hover:bg-sheet-edge/40 sm:gap-4 sm:px-5"
+    >
       <AppAvatar name={member.user.name} role={avatarRole(member.role_name)} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -122,6 +135,6 @@ function StaffRow({ member }: { readonly member: StaffMemberWire }) {
       >
         {member.variance_kobo_30d === 0 ? '₦0.00' : formatNaira(-member.variance_kobo_30d)}
       </span>
-    </div>
+    </Link>
   );
 }

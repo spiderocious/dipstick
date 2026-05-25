@@ -38,6 +38,12 @@ export const shiftRepo: ShiftRepo = {
     shifts()
       .find({ branchId, businessDate, status: 'closed', varianceStatus: 'balanced' })
       .toArray(),
+  findByAttendant: (orgId, attendantId, limit) =>
+    shifts()
+      .find({ orgId, attendantId })
+      .sort({ openedAt: -1 })
+      .limit(limit)
+      .toArray(),
 };
 
 export const dipRepo: DipRepo = {

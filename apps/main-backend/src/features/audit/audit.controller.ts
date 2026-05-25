@@ -3,7 +3,9 @@ import type { Request, Response } from 'express';
 import { parsePageParams, pageMeta } from '@lib/pagination.js';
 import { ResponseUtil } from '@lib/response.js';
 import { getAuth } from '@lib/http/authedRequest.js';
+import { serializeRefs } from '@shared/serializers.js';
 
+import { refsService } from '../refs/refs.service.js';
 import { auditRepo, type AuditQuery } from './audit.repo.js';
 
 const serializeAudit = (d: Awaited<ReturnType<typeof auditRepo.list>>['items'][number]) => ({
@@ -35,6 +37,24 @@ export const auditController = {
       ...(typeof req.query['entity_id'] === 'string' ? { entityId: req.query['entity_id'] } : {}),
     };
     const page = await auditRepo.list(query);
-    return ResponseUtil.ok(res, { items: page.items.map(serializeAudit) }, pageMeta(page));
+
+    // Collect every id referenced by the page (actor, entity, branch, + ids nested in the
+    // before/after diffs) and resolve them to labels so the UI never shows a raw id.
+    const ids = new Set<string>();
+    for (const d of page.items) {
+      if (d.actorId) ids.add(d.actorId);
+      if (d.entityId) ids.add(d.entityId);
+      if (d.branchId) ids.add(d.branchId);
+      refsService.collectIdsFromValue(d.before, ids);
+      refsService.collectIdsFromValue(d.after, ids);
+    }
+    const refs = await refsService.resolveRefs(auth.orgId, [...ids]);
+
+    return ResponseUtil.okWithRefs(
+      res,
+      { items: page.items.map(serializeAudit) },
+      serializeRefs(refs),
+      pageMeta(page),
+    );
   },
 };

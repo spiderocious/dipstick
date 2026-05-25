@@ -23,6 +23,8 @@ export const QK = {
   expense: (expenseId: string) => ['expense', expenseId] as const,
 
   staff: (branchId: string) => ['staff', branchId] as const,
+  staffDetail: (userId: string) => ['staff-detail', userId] as const,
+  staffActivity: (userId: string) => ['staff-activity', userId] as const,
   roster: (branchId: string, weekStart: string) => ['roster', branchId, weekStart] as const,
   varianceLeaderboard: (branchId: string) => ['variance-leaderboard', branchId] as const,
 

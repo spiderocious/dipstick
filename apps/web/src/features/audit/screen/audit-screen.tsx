@@ -1,10 +1,11 @@
 import { formatRelative } from '@dipstick/core';
-import { useAudit, type AuditEntryWire } from '@dipstick/api';
+import { useAudit, type AuditEntryWire, type RefMap } from '@dipstick/api';
 import { AppEmptyState } from '@dipstick/ui';
 import { useParams } from 'react-router-dom';
 
 import { IconAudit } from '@icons';
 
+import { IdRef } from '@shared/id-ref';
 import { PageBody, PageHead, QueryState } from '@shared/screen';
 
 const AUDIT_COPY = {
@@ -25,15 +26,15 @@ export function AuditScreen() {
         isLoading={query.isLoading}
         isError={query.isError}
         data={query.data}
-        isEmpty={(items) => items.length === 0}
+        isEmpty={(d) => d.items.length === 0}
         empty={
           <AppEmptyState icon={<IconAudit size={40} aria-hidden="true" />} title={AUDIT_COPY.emptyTitle} description={AUDIT_COPY.emptyBody} />
         }
       >
-        {(items) => (
+        {({ items, refs }) => (
           <ol className="m-0 list-none p-0">
             {items.map((entry) => (
-              <AuditRow key={entry.id} entry={entry} />
+              <AuditRow key={entry.id} entry={entry} refs={refs} />
             ))}
           </ol>
         )}
@@ -42,7 +43,7 @@ export function AuditScreen() {
   );
 }
 
-function AuditRow({ entry }: { readonly entry: AuditEntryWire }) {
+function AuditRow({ entry, refs }: { readonly entry: AuditEntryWire; readonly refs: RefMap }) {
   return (
     <li className="flex gap-4 border-b border-hair-soft py-3.5 last:border-b-0">
       <span className="w-32 flex-shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-tertiary">
@@ -51,14 +52,19 @@ function AuditRow({ entry }: { readonly entry: AuditEntryWire }) {
       <div className="min-w-0">
         <div className="flex items-baseline gap-2">
           <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-ink">{entry.action}</span>
-          <span className="font-mono text-[11px] text-ink-tertiary">
-            {entry.entity_type} · {entry.entity_id}
+          <span className="text-[12px] text-ink-secondary">
+            <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-tertiary">
+              {entry.entity_type}
+            </span>{' '}
+            <IdRef id={entry.entity_id} refs={refs} className="text-[12px]" />
           </span>
         </div>
         {entry.note !== null && entry.note !== '' && (
           <p className="mt-1 font-serif text-[13px] italic leading-[1.45] text-ink-secondary">“{entry.note}”</p>
         )}
-        <div className="mt-0.5 font-mono text-[10px] text-ink-tertiary">by {entry.actor_id}</div>
+        <div className="mt-0.5 text-[11px] text-ink-tertiary">
+          by <IdRef id={entry.actor_id} refs={refs} className="text-[11px]" />
+        </div>
       </div>
     </li>
   );

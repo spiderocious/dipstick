@@ -312,6 +312,45 @@ export interface AuditEntryWire {
   at: string;
 }
 
+// A resolved id → label (+ navigability). Endpoints that carry opaque ids return a
+// `refs: RefMap` (top-level, beside `data`) so the UI shows labels instead of raw ids.
+export interface RefWire {
+  type:
+    | 'user'
+    | 'role'
+    | 'shift'
+    | 'delivery'
+    | 'expense'
+    | 'pump'
+    | 'tank'
+    | 'branch'
+    | 'membership'
+    | 'roster'
+    | 'org';
+  label: string;
+  href_kind: 'user' | 'shift' | 'delivery' | 'branch' | null;
+}
+
+export type RefMap = Record<string, RefWire>;
+
+// Per-person staff detail (GET /staff/:userId/detail).
+export interface StaffMembershipDetailWire extends MembershipWire {
+  branch_name: string | null;
+}
+
+export interface StaffMetricsWire {
+  shift_count_total: number;
+  shift_count_30d: number;
+  variance_kobo_30d: number;
+}
+
+export interface StaffDetailWire {
+  user: UserWire;
+  memberships: StaffMembershipDetailWire[];
+  metrics: StaffMetricsWire;
+  recent_shifts: ShiftWire[];
+}
+
 export interface NotificationWire {
   id: string;
   kind: string;

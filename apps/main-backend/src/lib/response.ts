@@ -9,6 +9,18 @@ export class ResponseUtil {
     return res.status(200).json(body);
   }
 
+  // Like ok(), but also attaches a top-level `refs` id→label map (see ApiEnvelope). Used by
+  // list endpoints (audit, activity) that carry opaque ids the UI resolves via refs.
+  static okWithRefs<T>(
+    res: Response,
+    data: T,
+    refs: Record<string, unknown>,
+    meta?: Record<string, unknown>,
+  ): Response {
+    const body: ApiEnvelope<T> = { data, ...(meta ? { meta } : {}), refs };
+    return res.status(200).json(body);
+  }
+
   static created<T>(res: Response, data: T): Response {
     return res.status(201).json({ data } satisfies ApiEnvelope<T>);
   }

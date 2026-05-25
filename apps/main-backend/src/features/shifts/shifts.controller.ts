@@ -6,8 +6,9 @@ import { getAuth } from '@lib/http/authedRequest.js';
 import { sendResult } from '@lib/http/respond.js';
 import { ResponseUtil } from '@lib/response.js';
 import { validate } from '@lib/validate.js';
-import { serializeDip, serializeShift, serializeTank } from '@shared/serializers.js';
+import { serializeDip, serializeRefs, serializeShift, serializeTank } from '@shared/serializers.js';
 
+import { refsService } from '../refs/refs.service.js';
 import {
   CloseShiftBody,
   OpenShiftBody,
@@ -55,7 +56,10 @@ export const shiftsController = {
   get: async (req: Request, res: Response): Promise<Response> => {
     const auth = getAuth(req);
     const result = await shiftsService.getById(auth.orgId, req.params['shiftId'] as string);
-    return sendResult(res, result, (r, data) => ResponseUtil.ok(r, serializeShift(data)));
+    if (!result.success) return sendResult(res, result);
+    const s = result.data;
+    const refs = await refsService.resolveRefs(auth.orgId, [s.attendantId, s.pumpId, s.branchId]);
+    return ResponseUtil.okWithRefs(res, serializeShift(s), serializeRefs(refs));
   },
 
   close: async (req: Request, res: Response): Promise<Response> => {
@@ -121,13 +125,24 @@ export const shiftsController = {
     const auth = getAuth(req);
     const date = (req.query['date'] as string | undefined) ?? new Date().toISOString().slice(0, 10);
     const result = await shiftsService.daybook(auth.orgId, req.params['branchId'] as string, date);
-    return sendResult(res, result, (r, data) =>
-      ResponseUtil.ok(r, {
+    if (!result.success) return sendResult(res, result);
+    const data = result.data;
+    // Resolve attendant + pump ids shown on each shift row so the FE can name + link them.
+    const ids = new Set<string>();
+    for (const s of data.shifts) {
+      ids.add(s.attendantId);
+      ids.add(s.pumpId);
+    }
+    const refs = await refsService.resolveRefs(auth.orgId, [...ids]);
+    return ResponseUtil.okWithRefs(
+      res,
+      {
         business_date: date,
         shifts: data.shifts.map(serializeShift),
         dips: data.dips.map(serializeDip),
         tanks: data.tanks.map(serializeTank),
-      }),
+      },
+      serializeRefs(refs),
     );
   },
 };

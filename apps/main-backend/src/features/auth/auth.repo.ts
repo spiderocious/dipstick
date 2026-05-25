@@ -20,6 +20,12 @@ export interface UserRepo {
   insert(doc: UserDoc, tx?: Tx): Promise<void>;
   setEmailVerified(id: string, at: string): Promise<void>;
   setPhoneVerified(id: string, at: string): Promise<void>;
+  update(
+    id: string,
+    patch: Partial<
+      Pick<UserDoc, 'name' | 'email' | 'phone' | 'emailVerifiedAt' | 'phoneVerifiedAt' | 'passwordHash'>
+    >,
+  ): Promise<void>;
 }
 
 export interface OrgRepo {

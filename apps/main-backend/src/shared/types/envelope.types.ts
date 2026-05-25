@@ -1,9 +1,12 @@
 import type { ErrorCode, ErrorType } from '../constants/error-codes.js';
 
-// Success envelope is unchanged: { data, meta? }.
+// Success envelope: { data, meta? }. `refs` is an optional top-level id→label map (not
+// pagination, so it sits beside meta rather than inside it) — used by list endpoints that
+// would otherwise return raw ids the UI can't render (audit, activity, …).
 export interface ApiEnvelope<T> {
   data: T;
   meta?: Record<string, unknown>;
+  refs?: Record<string, unknown>;
 }
 
 // Error envelope is FLAT — no nesting. Always exactly these three fields.

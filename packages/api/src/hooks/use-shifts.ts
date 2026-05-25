@@ -10,7 +10,9 @@ import type {
   OpenShiftPayload,
   VoidShiftPayload,
 } from '../types/payloads.js';
-import type { DaybookWire, DipWire, ShiftWire } from '../types/wire.js';
+import type { DaybookWire, DipWire, RefMap, ShiftWire } from '../types/wire.js';
+
+const EMPTY_REFS: RefMap = {};
 
 export function useDaybook(branchId: string, date: string) {
   return useQuery({
@@ -20,7 +22,8 @@ export function useDaybook(branchId: string, date: string) {
       const res = await apiClient
         .get(EP.DAYBOOK(branchId), { searchParams: { date } })
         .json<ApiResponse<DaybookWire>>();
-      return res.data;
+      // refs resolve attendant/pump ids to names+links on the shift rows.
+      return { ...res.data, refs: (res.refs ?? EMPTY_REFS) as RefMap };
     },
   });
 }
@@ -31,7 +34,7 @@ export function useShift(shiftId: string) {
     enabled: shiftId !== '',
     queryFn: async () => {
       const res = await apiClient.get(EP.SHIFT(shiftId)).json<ApiResponse<ShiftWire>>();
-      return res.data;
+      return { ...res.data, refs: (res.refs ?? EMPTY_REFS) as RefMap };
     },
   });
 }

@@ -13,6 +13,8 @@ export interface ShiftRepo {
   findByBranchDate(branchId: string, businessDate: string): Promise<ShiftDoc[]>;
   // Balanced, closed-but-unposted shifts (for post-all-balanced).
   findBalancedClosed(branchId: string, businessDate: string): Promise<ShiftDoc[]>;
+  // A person's recent shifts across all branches (staff detail), newest first.
+  findByAttendant(orgId: string, attendantId: string, limit: number): Promise<ShiftDoc[]>;
 }
 
 export interface DipRepo {

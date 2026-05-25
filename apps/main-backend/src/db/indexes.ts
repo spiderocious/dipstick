@@ -52,6 +52,7 @@ export const ensureIndexes = async (): Promise<void> => {
   await db.collection(COLLECTION.notifications).createIndex({ userId: 1, createdAt: -1 });
   await db.collection(COLLECTION.audit).createIndex({ orgId: 1, branchId: 1, at: -1 });
   await db.collection(COLLECTION.audit).createIndex({ entityType: 1, entityId: 1, at: -1 });
+  await db.collection(COLLECTION.audit).createIndex({ orgId: 1, actorId: 1, at: -1 });
 
   // OTP + refresh tokens expire via TTL.
   await db.collection(COLLECTION.otps).createIndex({ channel: 1, target: 1 });

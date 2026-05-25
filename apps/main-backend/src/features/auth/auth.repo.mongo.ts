@@ -47,6 +47,12 @@ export const userRepo: UserRepo = {
   setPhoneVerified: async (id, at) => {
     await users().updateOne({ _id: id }, { $set: { phoneVerifiedAt: at, updatedAt: at } });
   },
+  update: async (id, patch) => {
+    await users().updateOne(
+      { _id: id },
+      { $set: { ...patch, updatedAt: new Date().toISOString() } },
+    );
+  },
 };
 
 export const orgRepo: OrgRepo = {

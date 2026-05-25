@@ -4,7 +4,11 @@ import { P } from '@dipstick/core';
 
 import { asyncHandler } from '@lib/http/asyncHandler.js';
 import { requireAuth } from '@middlewares/auth.middleware.js';
-import { requirePermission, requirePermissionForBranch } from '@middlewares/authorize.middleware.js';
+import {
+  requirePermission,
+  requirePermissionForBranch,
+  type BranchResolver,
+} from '@middlewares/authorize.middleware.js';
 
 import { membershipRepo } from '../auth/auth.repo.mongo.js';
 import { staffController } from './staff.controller.js';
@@ -38,15 +42,52 @@ router.get(
   requirePermission(P.CAN_VIEW_STAFF),
   asyncHandler(staffController.leaderboard),
 );
+// Assign an existing person to THIS branch (multi-branch). :branchId drives scope.
+router.post(
+  '/:branchId/staff/:userId/assign',
+  requirePermission(P.CAN_MANAGE_STAFF, P.CAN_ASSIGN_ROLES),
+  asyncHandler(staffController.assign),
+);
 
-// Membership update is addressed by membershipId (no :branchId in the path). Scope must
-// resolve against the TARGET staff member's branch — not the caller's '*' membership — so a
-// branch-scoped Manager can edit staff in their own branch (BUG-02). We look up the target
-// membership's branchId and authorize against that; a '*' (org-wide) target falls back to
-// org-wide scope. A null branchId (membership not found / cross-tenant) → loadScope yields
-// the caller's '*' membership, and the service still re-checks orgId → 404 for the stranger.
+// Resolve scope to a branch the TARGET user belongs to (any active branch membership; owner
+// '*' resolves org-wide). Lets a branch-scoped manager act on staff they share a branch with.
+const userBranchResolver: BranchResolver = async (req) => {
+  const userId = req.params['userId'] as string;
+  const memberships = await membershipRepo.findByUser(userId);
+  const branchScoped = memberships.find((m) => m.branchId !== '*');
+  // '*' target → org-wide (null) so an owner caller resolves their own '*' membership.
+  return branchScoped ? branchScoped.branchId : null;
+};
+
+// Membership update by membershipId (existing contract). Scope = the target membership's branch.
 const memberRouter: IRouter = Router();
 memberRouter.use(requireAuth);
+
+// Per-person detail surface, addressed by userId. Specific paths before the bare /:userId.
+memberRouter.get(
+  '/:userId/detail',
+  requirePermissionForBranch(userBranchResolver, P.CAN_VIEW_STAFF),
+  asyncHandler(staffController.detail),
+);
+memberRouter.get(
+  '/:userId/activity',
+  requirePermissionForBranch(userBranchResolver, P.CAN_VIEW_STAFF, P.CAN_VIEW_AUDIT),
+  asyncHandler(staffController.activity),
+);
+memberRouter.post(
+  '/:userId/reset-password',
+  requirePermissionForBranch(userBranchResolver, P.CAN_MANAGE_STAFF),
+  asyncHandler(staffController.resetPassword),
+);
+memberRouter.patch(
+  '/:userId/account',
+  requirePermissionForBranch(userBranchResolver, P.CAN_MANAGE_STAFF),
+  asyncHandler(staffController.editAccount),
+);
+
+// Membership update is addressed by membershipId. Scope resolves against the TARGET
+// membership's branch (BUG-02). Registered last so the more specific /:userId/* paths above
+// win; this matches the single-segment /:membershipId only.
 memberRouter.patch(
   '/:membershipId',
   requirePermissionForBranch(

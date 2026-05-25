@@ -5,6 +5,8 @@
 export interface ApiResponse<T> {
   data: T;
   meta?: Record<string, unknown>;
+  // Optional top-level id→label map on endpoints that carry opaque ids (audit, activity).
+  refs?: Record<string, unknown>;
 }
 
 // Numeric error codes, matching the backend ERROR_CODE constant.

@@ -30,6 +30,8 @@ export const ROUTES = {
   BRANCH_PRICING: (branchId: string) => `/branches/${branchId}/pricing`,
   BRANCH_EXPENSES: (branchId: string) => `/branches/${branchId}/expenses`,
   BRANCH_STAFF: (branchId: string) => `/branches/${branchId}/staff`,
+  BRANCH_STAFF_MEMBER: (branchId: string, userId: string) =>
+    `/branches/${branchId}/staff/${userId}`,
   BRANCH_ROSTER: (branchId: string) => `/branches/${branchId}/roster`,
   BRANCH_AUDIT: (branchId: string) => `/branches/${branchId}/audit`,
 
@@ -56,6 +58,7 @@ export const BRANCH_SEGMENT = {
   PRICING: 'pricing',
   EXPENSES: 'expenses',
   STAFF: 'staff',
+  STAFF_MEMBER: 'staff/:userId',
   ROSTER: 'roster',
   AUDIT: 'audit',
 } as const;

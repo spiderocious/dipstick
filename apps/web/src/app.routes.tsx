@@ -29,6 +29,7 @@ const DeliveryDetailScreen = lazy(() => import('@features/deliveries/screen/deli
 const PricingScreen = lazy(() => import('@features/pricing/screen/pricing-screen.tsx').then((m) => ({ default: m.PricingScreen })));
 const ExpensesScreen = lazy(() => import('@features/expenses/screen/expenses-screen.tsx').then((m) => ({ default: m.ExpensesScreen })));
 const StaffScreen = lazy(() => import('@features/staff/screen/staff-screen.tsx').then((m) => ({ default: m.StaffScreen })));
+const StaffDetailScreen = lazy(() => import('@features/staff/screen/staff-detail-screen.tsx').then((m) => ({ default: m.StaffDetailScreen })));
 const RosterScreen = lazy(() => import('@features/staff/screen/roster-screen.tsx').then((m) => ({ default: m.RosterScreen })));
 const AuditScreen = lazy(() => import('@features/audit/screen/audit-screen.tsx').then((m) => ({ default: m.AuditScreen })));
 
@@ -84,6 +85,7 @@ export function AppRoutes() {
         <Route path={`${BRANCH_BASE}/${BRANCH_SEGMENT.PRICING}`} element={<Lazy><PricingScreen /></Lazy>} />
         <Route path={`${BRANCH_BASE}/${BRANCH_SEGMENT.EXPENSES}`} element={<Lazy><ExpensesScreen /></Lazy>} />
         <Route path={`${BRANCH_BASE}/${BRANCH_SEGMENT.STAFF}`} element={<Lazy><StaffScreen /></Lazy>} />
+        <Route path={`${BRANCH_BASE}/${BRANCH_SEGMENT.STAFF_MEMBER}`} element={<Lazy><StaffDetailScreen /></Lazy>} />
         <Route path={`${BRANCH_BASE}/${BRANCH_SEGMENT.ROSTER}`} element={<Lazy><RosterScreen /></Lazy>} />
         <Route path={`${BRANCH_BASE}/${BRANCH_SEGMENT.AUDIT}`} element={<Lazy><AuditScreen /></Lazy>} />
       </Route>

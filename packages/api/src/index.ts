@@ -54,6 +54,11 @@ export {
   useRoster,
   useSaveRoster,
   useVarianceLeaderboard,
+  useStaffDetail,
+  useStaffActivity,
+  useAssignBranch,
+  useResetPassword,
+  useEditAccount,
 } from './hooks/use-staff.js';
 
 // Hooks — day, shifts, dips

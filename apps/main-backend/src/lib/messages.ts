@@ -44,6 +44,9 @@ export const MESSAGES = {
   // Staff
   staff_not_found: 'Staff member not found',
   membership_not_found: 'Assignment not found',
+  already_member: 'This person is already assigned to that branch',
+  account_email_taken: 'Another account already uses that email',
+  account_phone_taken: 'Another account already uses that phone number',
 
   // Shifts / dips
   shift_not_found: 'Shift not found',

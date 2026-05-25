@@ -29,6 +29,13 @@ export const EP = {
     `api/v1/branches/${branchId}/pumps/${pumpId}`,
   STAFF: (branchId: string) => `api/v1/branches/${branchId}/staff`,
   STAFF_MEMBER: (membershipId: string) => `api/v1/staff/${membershipId}`,
+  // Per-person staff detail surface (addressed by userId)
+  STAFF_DETAIL: (userId: string) => `api/v1/staff/${userId}/detail`,
+  STAFF_ACTIVITY: (userId: string) => `api/v1/staff/${userId}/activity`,
+  STAFF_RESET_PASSWORD: (userId: string) => `api/v1/staff/${userId}/reset-password`,
+  STAFF_ACCOUNT: (userId: string) => `api/v1/staff/${userId}/account`,
+  STAFF_ASSIGN: (branchId: string, userId: string) =>
+    `api/v1/branches/${branchId}/staff/${userId}/assign`,
   ROSTER: (branchId: string) => `api/v1/branches/${branchId}/roster`,
   VARIANCE_LEADERBOARD: (branchId: string) =>
     `api/v1/branches/${branchId}/variance-leaderboard`,

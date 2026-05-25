@@ -1,5 +1,5 @@
 import { P, ROUTES, VARIANCE_STATUS, formatNaira } from '@dipstick/core';
-import { usePostBalanced, useDaybook, type ShiftWire } from '@dipstick/api';
+import { usePostBalanced, useDaybook, type RefMap, type ShiftWire } from '@dipstick/api';
 import {
   AppButton,
   AppEmptyState,
@@ -97,7 +97,7 @@ export function DaybookScreen() {
               />
             }
           >
-            {(shifts) => <ReconTable branchId={branchId} shifts={shifts} onOpenShift={(id) => navigate(ROUTES.BRANCH_SHIFT(branchId, id))} />}
+            {(shifts) => <ReconTable branchId={branchId} shifts={shifts} refs={data.refs} onOpenShift={(id) => navigate(ROUTES.BRANCH_SHIFT(branchId, id))} />}
           </QueryState>
         )}
       </QueryState>
@@ -108,10 +108,15 @@ export function DaybookScreen() {
 interface ReconTableProps {
   readonly branchId: string;
   readonly shifts: ShiftWire[];
+  readonly refs: RefMap;
   readonly onOpenShift: (shiftId: string) => void;
 }
 
-function ReconTable({ shifts, onOpenShift }: ReconTableProps) {
+// Label for an id from the refs map, falling back to the raw id (the row is already a link,
+// so we resolve names inline rather than nesting another clickable IdRef).
+const refLabel = (refs: RefMap, id: string): string => refs[id]?.label ?? id;
+
+function ReconTable({ shifts, refs, onOpenShift }: ReconTableProps) {
   const totals = shifts.reduce(
     (acc, s) => ({
       litres: acc.litres + (s.litres ?? 0),
@@ -143,9 +148,9 @@ function ReconTable({ shifts, onOpenShift }: ReconTableProps) {
             <AppTr key={s.id} voided={s.is_voided} className="cursor-pointer" onClick={() => onOpenShift(s.id)}>
               <AppTd variant="name">
                 <div className="flex flex-col">
-                  <span>{s.attendant_id}</span>
+                  <span>{refLabel(refs, s.attendant_id)}</span>
                   <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-tertiary">
-                    {s.pump_id} · {SHIFT_WINDOW_SHORT[s.window] ?? s.window}
+                    {refLabel(refs, s.pump_id)} · {SHIFT_WINDOW_SHORT[s.window] ?? s.window}
                   </span>
                 </div>
               </AppTd>

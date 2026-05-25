@@ -4,11 +4,20 @@ import type { ShiftWindow } from '@dipstick/core';
 
 import { getAuth } from '@lib/http/authedRequest.js';
 import { sendResult } from '@lib/http/respond.js';
+import { parsePageParams, pageMeta } from '@lib/pagination.js';
 import { ResponseUtil } from '@lib/response.js';
 import { validate } from '@lib/validate.js';
-import { serializeMembership, serializeUser } from '@shared/serializers.js';
+import { serializeMembership, serializeRefs, serializeShift, serializeUser } from '@shared/serializers.js';
 
-import { AddStaffBody, SetRosterBody, UpdateStaffBody } from './staff.schema.js';
+import { auditRepo } from '../audit/audit.repo.js';
+import { refsService } from '../refs/refs.service.js';
+import {
+  AddStaffBody,
+  AssignBranchBody,
+  EditAccountBody,
+  SetRosterBody,
+  UpdateStaffBody,
+} from './staff.schema.js';
 import { staffService } from './staff.service.js';
 
 export const staffController = {
@@ -99,5 +108,112 @@ export const staffController = {
         shift_count: r.shiftCount,
       })),
     });
+  },
+
+  // GET /staff/:userId — the per-person detail (account, all memberships, metrics, shifts).
+  detail: async (req: Request, res: Response): Promise<Response> => {
+    const auth = getAuth(req);
+    const result = await staffService.getDetail(auth.orgId, req.params['userId'] as string);
+    return sendResult(res, result, (r, data) =>
+      ResponseUtil.ok(r, {
+        user: serializeUser(data.user),
+        memberships: data.memberships.map((m) => ({
+          ...serializeMembership(m.membership),
+          branch_name: m.branchName,
+          role_name: m.roleName,
+          permissions: m.permissions,
+        })),
+        metrics: {
+          shift_count_total: data.metrics.shiftCountTotal,
+          shift_count_30d: data.metrics.shiftCount30d,
+          variance_kobo_30d: data.metrics.varianceKobo30d,
+        },
+        recent_shifts: data.recentShifts.map(serializeShift),
+      }),
+    );
+  },
+
+  // GET /staff/:userId/activity — audit entries this person performed (refs-enriched).
+  activity: async (req: Request, res: Response): Promise<Response> => {
+    const auth = getAuth(req);
+    const { cursor, limit } = parsePageParams(req.query as Record<string, unknown>);
+    const page = await auditRepo.list({
+      orgId: auth.orgId,
+      actorId: req.params['userId'] as string,
+      cursor,
+      limit,
+    });
+    const ids = new Set<string>();
+    for (const d of page.items) {
+      if (d.actorId) ids.add(d.actorId);
+      if (d.entityId) ids.add(d.entityId);
+      if (d.branchId) ids.add(d.branchId);
+      refsService.collectIdsFromValue(d.before, ids);
+      refsService.collectIdsFromValue(d.after, ids);
+    }
+    const refs = await refsService.resolveRefs(auth.orgId, [...ids]);
+    return ResponseUtil.okWithRefs(
+      res,
+      {
+        items: page.items.map((d) => ({
+          id: d._id,
+          branch_id: d.branchId,
+          actor_id: d.actorId,
+          action: d.action,
+          entity_type: d.entityType,
+          entity_id: d.entityId,
+          before: d.before,
+          after: d.after,
+          note: d.note,
+          at: d.at,
+        })),
+      },
+      serializeRefs(refs),
+      pageMeta(page),
+    );
+  },
+
+  // POST /branches/:branchId/staff/:userId/assign — add a membership in another branch.
+  assign: async (req: Request, res: Response): Promise<Response> => {
+    const auth = getAuth(req);
+    const body = validate(AssignBranchBody, req.body);
+    const result = await staffService.assignToBranch(
+      auth.orgId,
+      req.params['branchId'] as string,
+      req.params['userId'] as string,
+      body.role_id,
+      auth.userId,
+    );
+    return sendResult(res, result, (r, data) => ResponseUtil.created(r, serializeMembership(data)));
+  },
+
+  // POST /staff/:userId/reset-password — issue a fresh temp password.
+  resetPassword: async (req: Request, res: Response): Promise<Response> => {
+    const auth = getAuth(req);
+    const result = await staffService.resetPassword(
+      auth.orgId,
+      req.params['userId'] as string,
+      auth.userId,
+    );
+    return sendResult(res, result, (r, data) =>
+      ResponseUtil.ok(r, { reset: true, ...(data.tempPassword ? { temp_password: data.tempPassword } : {}) }),
+    );
+  },
+
+  // PATCH /staff/:userId — edit the account (name/email/phone).
+  editAccount: async (req: Request, res: Response): Promise<Response> => {
+    const auth = getAuth(req);
+    const body = validate(EditAccountBody, req.body);
+    const patch: { name?: string; email?: string; phone?: string | null } = {};
+    if (body.name !== undefined) patch.name = body.name;
+    if (body.email !== undefined) patch.email = body.email;
+    if (body.phone !== undefined) patch.phone = body.phone;
+    const result = await staffService.editAccount(
+      auth.orgId,
+      req.params['userId'] as string,
+      patch,
+      auth.userId,
+    );
+    return sendResult(res, result, (r, data) => ResponseUtil.ok(r, serializeUser(data)));
   },
 };
